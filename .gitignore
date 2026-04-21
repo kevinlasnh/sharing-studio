@@ -1,0 +1,18 @@
+# Claude Code local state — never share
+.claude/
+task_plan.md
+findings.md
+progress.md
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
