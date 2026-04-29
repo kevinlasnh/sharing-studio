@@ -1,0 +1,35 @@
+{
+  "env": {},
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"[L1 BOOT] 工作开始。你 MUST 立刻调用 Skill 工具加载 planning-with-files 获取完整 PWF 规范。加载后再按 ~/.claude/CLAUDE.md 里的三件套分支逻辑处理当前仓库状态。\"}}'"
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "planning-with-files@planning-with-files": true,
+    "claude-obsidian@claude-obsidian-marketplace": true,
+    "obsidian@obsidian-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-obsidian-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "AgriciDaniel/claude-obsidian"
+      }
+    },
+    "obsidian-skills": {
+      "source": {
+        "source": "github",
+        "repo": "kepano/obsidian-skills"
+      }
+    }
+  }
+}

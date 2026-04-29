@@ -1,0 +1,10 @@
+{
+  "theme": "obsidian",
+  "accentColor": "",
+  "nativeMenus": false,
+  "baseFontSize": 15,
+  "enabledCssSnippets": [
+    "second-brain-graph-colors",
+    "second-brain-markdown-images"
+  ]
+}

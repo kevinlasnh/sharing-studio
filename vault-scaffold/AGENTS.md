@@ -1,7 +1,7 @@
 ---
-title: CLAUDE
+title: AGENTS
 type: note
-permalink: second-brain/claude
+permalink: second-brain/agents
 ---
 
 # Second Brain — Vault Router

@@ -1,4 +1,4 @@
-# Claude Code Global Configuration
+# Codex Global Configuration
 
 ## User Identity
 

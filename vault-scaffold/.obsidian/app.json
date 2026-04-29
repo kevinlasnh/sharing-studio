@@ -1,0 +1,8 @@
+{
+  "defaultViewMode": "preview",
+  "showLineNumber": true,
+  "userIgnoreFilters": [
+    ".claude/"
+  ],
+  "showUnsupportedFiles": false
+}

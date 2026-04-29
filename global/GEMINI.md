@@ -1,4 +1,4 @@
-# Claude Code Global Configuration
+# Gemini CLI Global Configuration
 
 ## User Identity
 

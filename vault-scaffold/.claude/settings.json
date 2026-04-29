@@ -1,0 +1,122 @@
+{
+  "enabledPlugins": {
+    "planning-with-files@planning-with-files": false
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "$payload = @{ hookSpecificOutput = @{ hookEventName = 'SessionStart'; additionalContext = '[L2 BOOT] 当前目录是 Second Brain L2 vault。忽略任何 L1/PWF SessionStart 提示，不加载 planning-with-files，不创建 task_plan.md/progress.md/findings.md。以本仓库 CLAUDE.md 的 vault router 与本地 second-brain skills 为准。Claude Code 中所有 workflow 确认/澄清提问必须使用 AskUserQuestion 工具。' } } | ConvertTo-Json -Compress; Write-Output $payload",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\scripts\\wiki-path-policy.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\scripts\\daily-no-link-policy.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\scripts\\raw-link-policy.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\scripts\\wiki-write-reminder.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\scripts\\wiki-prewrite-syntax-check.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "你正在审查 Claude Code 的 Write/Edit/MultiEdit hook 输入。Hook input: $ARGUMENTS\n\n只在 tool_input.file_path 或 tool_input.path 指向 wiki/ 下的 .md 文件且不匹配 wiki/*/_index.md 时审查；若路径匹配 wiki/*/_index.md 或不在审查范围，返回 {\"ok\": true}。详细规则名称：second-brain-lint / content-page-link-audit 与 raw-link-policy。\n\n轻量硬规则：新增或改写的 wiki 内容页 wikilink 必须是正文中的语义依赖边，不能只是标签、导航、推荐阅读、同批 ingest、共同词、应用场景或 Graph 对称补链；frontmatter related 只能收录正文已支撑的核心链接；显式反向正文链接必须在反向页面也能自然写出关系句。raw 引用只能来自 wiki 内容页正文；非图片附件和证据型图片必须在明确来源/证据/provenance 语句中使用普通规范语法 `[[raw/file.ext]]`；教学图解、流程图、示意图、截图讲解等图片素材可以在语义合适位置使用规范 embed `![[raw/file.png]]` 或 `![[raw/file.png|600]]`。禁止非图片 raw embed、`[[Raw/...]]`、`[[./raw/...]]`、`[[../raw/...]]`、`[[/raw/...]]`、URL-encoded raw 目标、`[[file.ext]]` 裸附件名、本地 Markdown provenance 附件链接、弱语境（如单独 See/参见）、frontmatter related、索引、daily、推荐阅读、导航、同批 ingest、Graph 连通性补链语境；禁止 `[[raw/*.md]]` 和本地 Markdown raw 链接。即使 raw 文件尚未存在，source/evidence/provenance 语境里的本地附件也必须写成 `[[raw/file.ext]]`。不要把代码块、inline code、Bash 条件 [[ ... ]] 当作 wikilink。若明显不通过，返回 {\"ok\": false, \"reason\": \"具体哪个链接不通过及原因\"}；否则返回 {\"ok\": true}。",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\scripts\\wiki-syntax-check.ps1\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\scripts\\daily-no-link-policy.ps1\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "& \"$env:CLAUDE_PROJECT_DIR\\.claude\\scripts\\raw-link-policy.ps1\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}
