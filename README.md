@@ -1,10 +1,3 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/banner-dark.svg">
-    <img alt="sharing-studio — open-source agent systems hub" src="./assets/banner-light.svg" width="900">
-  </picture>
-</p>
-
 <h1 align="center">sharing-studio</h1>
 
 <p align="center">
@@ -56,7 +49,6 @@ flowchart LR
 
 ```text
 sharing-studio/
-├── assets/                         # light/dark banner artwork
 ├── projects/
 │   ├── agent-memory-stack/          # L1 repo memory router templates
 │   ├── second-brain-scaffold/       # L2 Obsidian vault scaffold

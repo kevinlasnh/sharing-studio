@@ -1,10 +1,3 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/banner-dark.svg">
-    <img alt="sharing-studio — 开源 agent 系统脚手架 hub" src="./assets/banner-light.svg" width="900">
-  </picture>
-</p>
-
 <h1 align="center">sharing-studio</h1>
 
 <p align="center">
@@ -56,7 +49,6 @@ flowchart LR
 
 ```text
 sharing-studio/
-├── assets/                         # 明暗两版 banner
 ├── projects/
 │   ├── agent-memory-stack/          # L1 仓库记忆 router 模板
 │   ├── second-brain-scaffold/       # L2 Obsidian vault 脚手架
