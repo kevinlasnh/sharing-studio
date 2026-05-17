@@ -15,7 +15,7 @@
       }
     },
     {
-      "query": "file:CLAUDE OR file:AGENTS",
+      "query": "file:CLAUDE OR file:AGENTS OR file:GEMINI",
       "color": {
         "a": 1,
         "rgb": 13983232
@@ -29,14 +29,14 @@
       }
     },
     {
-      "query": "path:\"daily\"",
+      "query": "path:\"daily/\"",
       "color": {
         "a": 1,
         "rgb": 15787074
       }
     },
     {
-      "query": "path:\"wiki\"",
+      "query": "path:\"wiki/\"",
       "color": {
         "a": 1,
         "rgb": 40563
@@ -49,10 +49,10 @@
   "nodeSizeMultiplier": 0.6359375,
   "lineSizeMultiplier": 1.19739583333333,
   "collapse-forces": false,
-  "centerStrength": 0.703125,
-  "repelStrength": 20,
+  "centerStrength": 0.697916666666667,
+  "repelStrength": 17.5,
   "linkStrength": 1,
   "linkDistance": 30,
-  "scale": 0.11660891579455483,
+  "scale": 0.19341094789039304,
   "close": true
 }

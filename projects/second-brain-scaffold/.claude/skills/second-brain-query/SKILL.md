@@ -1,6 +1,6 @@
 ---
 name: second-brain-query
-description: Query the user's Second Brain vault without writing files. Use when the user asks "检查下我的第二大脑", "查旧知识", "第二大脑里有没有", "what do I know about", or asks where a topic should live in the Second Brain. Uses Basic Memory search first, Grep fallback, indexes as navigation only, domain-placement mode for read-only routing advice, daily only for explicit journal/timeline evidence, synthesis with wikilink citations for wiki pages, and explicit handoff to ingest for any write or web expansion.
+description: Query <your-username>'s Second Brain vault without writing vault Markdown files. Use when the user asks "检查下我的第二大脑", "查旧知识", "第二大脑里有没有", "what do I know about", or asks where a topic should live in the Second Brain. Uses Basic Memory search first with one search-only reindex before Grep fallback, indexes as navigation only, domain-placement mode for read-only routing advice, daily only for explicit journal/timeline evidence, synthesis with wikilink citations for wiki pages, and explicit handoff to ingest for any write or web expansion.
 ---
 
 # Second Brain Query
@@ -13,15 +13,17 @@ This skill is a vault-specific fork of the prior upstream `wiki-query` framework
 
 Run the retrieval workflow completely before answering. The user should not need to say "follow the skill carefully"; every query request already includes that requirement.
 
-Do not answer from the first search snippet, title, or index entry alone. Read the needed source page bodies, apply path filters, use Grep fallback when Basic Memory is stale or unavailable, and only then synthesize. Stop early only when the query is ambiguous enough to require scope clarification, or when no retrieval channel can run; in those cases, report the blocker instead of giving a partial answer as complete.
+Do not answer from the first search snippet, title, or index entry alone. Read the needed source page bodies, apply path filters, repair Basic Memory once when the local search index is dirty, use Grep fallback only when Basic Memory MCP/CLI cannot be used, and only then synthesize. Stop early only when the query is ambiguous enough to require scope clarification, or when no retrieval channel can run; in those cases, report the blocker instead of giving a partial answer as complete.
 
 In Claude Code, use the `AskUserQuestion` tool for every scope clarification, "open page vs ingest" decision, or same-topic confirmation. Do not ask these workflow questions as plain assistant text unless the current host does not expose that tool.
 
 ## Read-Only Boundary
 
-Do not write any file.
+Do not write any vault file.
 
 Do not create pages, fix links, update indexes, append journals, or save answers. If the user wants to keep or expand the result, explicitly hand off to `second-brain-ingest`.
+
+Query may run `basic-memory reindex --project second-brain --search` once to repair the local Basic Memory search index before retrieval. This updates Basic Memory's local index, not the Markdown vault, and is allowed inside Query.
 
 Do not use WebSearch/WebFetch inside Query. Web is an ingest source, not a query fallback.
 
@@ -29,26 +31,30 @@ Do not use WebSearch/WebFetch inside Query. Web is an ingest source, not a query
 
 Default path:
 
-1. Use Basic Memory `search_notes` with `project: second-brain` when available and synchronized. For CLI fallback, use `basic-memory tool search-notes "<query>" --project second-brain --page-size <n>`; do not rely on the current default project.
-2. Filter results by `file_path`: use `wiki/{domain}/{slug}.md` content pages as answer sources, `_index.md` and root `index.md` as navigation only. Exclude `daily/**` by default; use daily notes only when the user explicitly asks for journal, timeline, or session-history evidence.
-3. Ignore `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.obsidian/**`, `raw/**`, and deprecated scaffold paths as answer sources. Raw files are provenance/evidence/instructional visual attachments, not query answer nodes.
-4. Read the top matching wiki pages needed to answer.
-5. Follow only high-value wikilinks from wiki content pages that materially improve the answer. Do not use daily notes as graph traversal sources; when explicitly requested, daily notes are plain file/date evidence only.
-6. Synthesize with wikilink citations.
+1. Run `basic-memory status --project second-brain --json`.
+2. If status is dirty, run `basic-memory reindex --project second-brain --search` once, then run status again.
+3. If status is clean, use Basic Memory MCP `search_notes` with `project: second-brain`.
+4. If MCP is unavailable but CLI search works, use `basic-memory tool search-notes "<query>" --project second-brain --page-size <n>`; do not rely on the current default project.
+5. Filter results by `file_path`: use `wiki/{domain}/{slug}.md` content pages as answer sources, `_index.md` and root `index.md` as navigation only. Exclude `daily/**` by default; use daily notes only when the user explicitly asks for journal, timeline, or session-history evidence.
+6. Ignore `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.claude/**`, `.obsidian/**`, `raw/**`, and deprecated scaffold paths as answer sources. Raw files are provenance/evidence/instructional visual attachments, not query answer nodes.
+7. Read the top matching wiki pages needed to answer.
+8. Follow only high-value wikilinks from wiki content pages that materially improve the answer. Do not use daily notes as graph traversal sources; when explicitly requested, daily notes are plain file/date evidence only.
+9. Synthesize with wikilink citations.
 
 Do not rely on Basic Memory's generic `type` field for page kind; use `file_path`.
 
-Fallback when Basic Memory is unavailable or stale:
+Fallback when Basic Memory is unavailable or still stale after one reindex:
 
 1. Grep `wiki/` and root `index.md`. Add `daily/` only for explicit journal, timeline, or session-history questions.
 2. Classify results as `exact`, `related`, or `none`.
 3. Do not invent hybrid search scores.
+4. Report `Grep fallback: <reason>` in the final answer.
 
 Daily results are not knowledge pages. When explicitly requested, cite them by plain file path and date only; do not return them as wikilinks, backlinks, or related-note edges.
 
 Raw file paths may be mentioned only as provenance already cited by a wiki content page. Do not traverse from raw files or treat them as related notes.
 
-Treat Basic Memory as stale when `basic-memory status --project second-brain --json` reports new/modified/deleted/moves, or when search snippets contradict the file on disk. Query remains read-only: do not repair or reindex from this skill; report the stale index and use Grep fallback.
+Treat Basic Memory as stale only after one `--search` reindex still leaves status dirty, or when search snippets contradict the file on disk. Query remains vault-file read-only: do not edit Markdown to repair anything. Report stale-index residual risk and use Grep fallback only after the Basic Memory MCP/CLI path cannot be trusted.
 
 Index-first path:
 
@@ -56,7 +62,7 @@ Use root `index.md -> wiki/{domain}/_index.md -> content page` only when the use
 
 Domain-placement path:
 
-Use this read-only mode when the user asks where a pasted topic belongs, whether a new domain is needed, or how to classify a future ingest. Read root `index.md` and all `wiki/*/_index.md`, then search candidate pages. Return candidate domains and likely actions, but do not create or update anything. If the user wants to write, hand off to `second-brain-ingest`, which must run its own domain-routing preflight before writing.
+Use this read-only mode when the user asks where a pasted topic belongs, whether a new domain is needed, or how to classify a future ingest. Read root `index.md` and all `wiki/*/_index.md`, then search candidate pages through the same Basic Memory-first freshness gate. Return candidate domains and likely actions, but do not create or update anything. If the user wants to write, hand off to `second-brain-ingest`, which must run its own domain-routing preflight before writing.
 
 Domain-placement output should include:
 
@@ -91,7 +97,9 @@ If not found:
 Report blockage instead of answering as complete if any applicable item is missing:
 
 - Query remained read-only.
-- Basic Memory freshness was considered before trusting Basic Memory results, or Grep fallback was used.
+- Basic Memory freshness gate ran before trusting Basic Memory results.
+- If Basic Memory was dirty, one `basic-memory reindex --project second-brain --search` was attempted before Grep fallback.
+- Grep fallback, if used, was reported with the reason.
 - Results were filtered by `file_path` before use.
 - Candidate wiki page bodies were opened before synthesis.
 - `_index.md` and root `index.md` were used only as navigation/scope evidence.
@@ -123,7 +131,7 @@ Skip sections that do not apply.
 Never follow these upstream `wiki-query` behaviors in this vault:
 
 - Read `wiki/hot.md`.
-- Read `wiki/index.md`; root `index.md` is the index.
+- Read deprecated `wiki/index.md`; query routing must use root `index.md` instead.
 - Save answers under `wiki/questions/`.
 - Append `wiki/log.md`.
 - Automatically WebSearch.

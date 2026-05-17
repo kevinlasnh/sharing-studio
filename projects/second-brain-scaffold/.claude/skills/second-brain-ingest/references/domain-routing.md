@@ -46,9 +46,11 @@ For each atom, run enough retrieval to defend the placement:
    - compare against root `index.md` descriptions,
    - compare against every domain `_index.md` summary and page list.
 2. Page-level retrieval:
-   - Basic Memory MCP `search_notes` with `project: second-brain` when synchronized,
-   - CLI fallback: `basic-memory tool search-notes "<query>" --project second-brain --page-size 10`,
-   - Grep fallback over `wiki/` and root `index.md` when Basic Memory is unavailable, stale, or contradictory.
+   - Run `basic-memory status --project second-brain --json` as a freshness gate before trusting search results.
+   - If status is dirty, run `basic-memory reindex --project second-brain --search` once, then re-check status.
+   - Use Basic Memory MCP `search_notes` with `project: second-brain` when status is clean.
+   - If MCP is unavailable but CLI search works, use `basic-memory tool search-notes "<query>" --project second-brain --page-size 10`.
+   - Grep fallback over `wiki/` and root `index.md` is allowed only when MCP/CLI search is unavailable, one-shot reindex still leaves status dirty, or Basic Memory snippets contradict opened disk files.
 3. Exact collision checks:
    - likely English slug,
    - Chinese title,
@@ -103,7 +105,7 @@ source summary:
 domain inventory checked:
 - root index: yes
 - domain indexes checked: <N>
-- search method: Basic Memory clean | Basic Memory stale + Grep | Grep only
+- search method: Basic Memory MCP clean | Basic Memory MCP after reindex | Basic Memory CLI | Grep fallback: <reason>
 
 knowledge atoms:
 - atom: <short name>

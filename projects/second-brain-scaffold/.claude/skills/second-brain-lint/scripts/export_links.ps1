@@ -107,7 +107,7 @@ foreach ($file in $markdownFiles) {
     }
 }
 
-$linkPattern = [regex]'(!?)\[\[([^\]\|#]+)(?:#[^\]\|]+)?(?:\|[^\]]+)?\]\]'
+$linkPattern = [regex]'(!?)\[\[([^\]\|#]+)(?:#[^\]\|]+)?(?:\|([^\]]+))?\]\]'
 $rows = New-Object System.Collections.Generic.List[object]
 
 foreach ($file in $markdownFiles) {
@@ -143,6 +143,7 @@ foreach ($file in $markdownFiles) {
                 reciprocal = $false
                 frontmatter_only = [bool]$line.Frontmatter
                 embedded = ($match.Groups[1].Value -eq "!")
+                display = if ($match.Groups[3].Success) { $match.Groups[3].Value } else { $null }
             })
         }
     }

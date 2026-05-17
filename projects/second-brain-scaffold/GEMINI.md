@@ -1,7 +1,7 @@
 ---
-title: CLAUDE
+title: GEMINI
 type: note
-permalink: second-brain/claude
+permalink: second-brain/gemini
 ---
 
 # Second Brain — Vault Router

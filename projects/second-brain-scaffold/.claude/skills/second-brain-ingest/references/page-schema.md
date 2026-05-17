@@ -99,9 +99,11 @@ Raw links must stay in content page body text. Do not place raw links in root `i
 Wiki content pages may embed raw image files when the image is instructional content, such as a diagram, architecture figure, screenshot walkthrough, numerical example, visual comparison, or other visual explanation. Use Obsidian embed syntax near the paragraph the image clarifies:
 
 ```markdown
-![[raw/example-diagram.png]]
+![[raw/example-portrait.png|360]]
 ![[raw/example-diagram.png|600]]
 ```
+
+Raw image embeds must include a numeric display width. Use `|360` when the real image width is smaller than its height, and `|600` when the image is landscape or square.
 
 Do not add HTML wrappers, `<style>` blocks, or inline CSS to center images. Image centering is a display concern handled globally by `.obsidian/snippets/second-brain-markdown-images.css`.
 

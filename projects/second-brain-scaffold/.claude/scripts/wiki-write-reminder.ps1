@@ -57,7 +57,7 @@ $message = @"
 核心必须：
   ✓ [[wikilinks]]，不是 [text](x.md)
   ✓ 非 raw 附件 embed 用 ![[file.ext]]，不是 ![alt](x.png)
-  ✓ raw 非图片/证据素材用 [[raw/file.ext]]；教学图片可在语义位置用 ![[raw/image.png|600]]
+  ✓ raw 非图片/证据素材用 [[raw/file.ext]]；教学图片可在语义位置用 ![[raw/image.png|360]]（竖图）或 ![[raw/image.png|600]]（横图/方图）
   ✓ 图片居中由全局 CSS snippet 处理，不在正文写 HTML / <style> / inline CSS
   ✓ ==highlights==，不是 <mark>
   ✓ %%comments%%，不是 <!-- -->

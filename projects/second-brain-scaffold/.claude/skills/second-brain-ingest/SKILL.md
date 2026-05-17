@@ -1,6 +1,6 @@
 ---
 name: second-brain-ingest
-description: Ingest sources into the user's Second Brain vault. Use when the user asks to "整理进第二大脑", "ingest", "沉淀到第二大脑", or wants pasted text, URLs, Web AI image URLs, raw files, discussions, research, or original thoughts turned into wiki pages. Requires domain-routing preflight before any wiki write or new-domain proposal, then handles source reading, image URL analysis/download, atomization, search-before-write, create-vs-update decisions, human confirmation, wiki page writing with semantic raw image embeds, domain index updates, manifest output, and journal handoff.
+description: Ingest sources into <your-username>'s Second Brain vault. Use when the user asks to "整理进第二大脑", "ingest", "沉淀到第二大脑", or wants pasted text, URLs, Web AI image URLs, raw files, discussions, research, or original thoughts turned into wiki pages. Requires domain-routing preflight before any wiki write or new-domain proposal, then handles source reading, image URL analysis/download, atomization, search-before-write, create-vs-update decisions, human confirmation, wiki page writing with semantic raw image embeds, domain index updates, manifest output, and journal handoff.
 ---
 
 # Second Brain Ingest
@@ -65,14 +65,26 @@ Raw files are immutable source or visual material. Do not store generated summar
 6. After confirmation, decide per candidate topic: update existing page, create new page in an existing domain, split across domains, or execute the approved new-domain subworkflow.
 7. Write or edit wiki pages using `obsidian-markdown` syntax and the schema in `references/page-schema.md`. Place instructional raw image embeds at the nearest semantically relevant paragraph; do not append all images to the end as a gallery unless the page topic is explicitly an image catalog.
 8. Update the relevant domain `_index.md`. Update root `index.md` only when creating a preflight-approved new domain.
-9. Produce an ingest manifest listing preflight status, created pages, updated pages, domains, raw image assets, index changes, new-domain rationale if any, and journal status. Created/updated pages in the manifest should use `wiki/{domain}/{slug}.md` paths, not wikilinks.
-10. Ask whether to write the journal. If yes, hand off to `second-brain-journal` with the manifest. If no or later, report `Journal pending: <pages>` and mark ingest as deferred.
+9. Produce an ingest manifest listing preflight status, retrieval method, created pages, updated pages, domains, raw image assets, index changes, new-domain rationale if any, journal status, and Basic Memory sync status. Created/updated pages in the manifest should use `wiki/{domain}/{slug}.md` paths, not wikilinks.
+10. Ask whether to write the journal. If yes, hand off to `second-brain-journal` with the manifest and let journal perform the final Basic Memory closure after the daily write. If no or later, report `Journal pending: <pages>`, then run the Basic Memory sync closure for the already-written wiki/raw/index changes before returning; mark ingest as deferred only for the journal.
 
 ## Search-Before-Write Decision Rules
 
-Before using Basic Memory scores, verify the search result is not stale. When possible, check `basic-memory status --project second-brain --json`; if it reports new/modified/deleted/moves, or snippets contradict the file on disk, ignore Basic Memory scores and use the Grep fallback.
+Use Basic Memory-first retrieval for every atom before creating or updating pages.
 
-Filter Basic Memory results by `file_path` before deciding. Only `wiki/{domain}/{slug}.md` content pages are create/update candidates. `_index.md` and root `index.md` are navigation evidence only. Ignore `CLAUDE.md`, `AGENTS.md`, `.claude/**`, `.obsidian/**`, `daily/**`, `raw/**`, and deprecated scaffold paths as ingest candidates. Do not rely on Basic Memory's generic `type` field for page kind; use the file path.
+Freshness gate:
+
+1. Run `basic-memory status --project second-brain --json` before semantic page search.
+2. If status is clean, use Basic Memory MCP `search_notes` with `project: second-brain`.
+3. If status reports `new`, `modified`, `deleted`, `moves`, or `skipped_files`, run `basic-memory reindex --project second-brain --search` once, then run status again.
+4. If the second status is clean, use Basic Memory MCP `search_notes`.
+5. If MCP is unavailable but Basic Memory CLI works, use `basic-memory tool search-notes "<query>" --project second-brain --page-size <n>` before any Grep fallback.
+6. Use Grep / `rg` fallback only when MCP and CLI search are unavailable, the one-shot reindex fails or remains dirty, or Basic Memory snippets contradict the opened disk file.
+7. Record the actual retrieval method in the preflight and ingest manifest: `Basic Memory MCP clean`, `Basic Memory MCP after reindex`, `Basic Memory CLI`, or `Grep fallback: <reason>`.
+
+Grep fallback is an exception path, not the normal ingest path. When used, report the fallback reason and Basic Memory residual-risk; do not silently create pages as if semantic search had succeeded.
+
+Filter Basic Memory results by `file_path` before deciding. Only `wiki/{domain}/{slug}.md` content pages are create/update candidates. `_index.md` and root `index.md` are navigation evidence only. Ignore `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.claude/**`, `.obsidian/**`, `daily/**`, `raw/**`, and deprecated scaffold paths as ingest candidates. Do not rely on Basic Memory's generic `type` field for page kind; use the file path.
 
 Basic Memory scores:
 
@@ -85,6 +97,20 @@ Basic Memory scores:
 Grep fallback has no score. Classify only as `exact`, `related`, or `none`. `exact` and `related` require user confirmation before updating; only `none` may proceed to new-page creation after domain-routing preflight confirms the domain decision.
 
 Always open candidate page bodies before deciding. Do not decide from title, tag, `_index.md`, or search snippet alone.
+
+## Basic Memory Sync Closure
+
+If journal is written in the same ingest workflow, `second-brain-journal` owns the final Basic Memory adaptive reindex closure after the daily file write.
+
+If the user defers the journal after wiki/raw/index changes were already written, run an interim search-only sync closure before returning. This prevents Basic Memory from staying file-index dirty. The final search + embeddings checkpoint remains owned by `second-brain-journal` when the journal is later written.
+
+```powershell
+basic-memory status --project second-brain --json
+basic-memory reindex --project second-brain --search
+basic-memory status --project second-brain --json
+```
+
+Skip the search-only reindex command when the first status is already clean. If the final status is dirty or any command fails, report `residual-risk` and include the status details. The final ingest response must not say Basic Memory file sync is clean unless the post-write status check proves it. If the journal is deferred, also report that the full embeddings checkpoint is deferred until the journal write.
 
 ## New Page vs Update Existing Page
 
@@ -102,7 +128,7 @@ For user-supplied raw files and user-provided image URLs:
 - Do not create `wiki/sources/**`, `.raw/**`, or domain-local raw folders.
 - Do not add raw links to root `index.md`, domain `_index.md`, daily notes, or frontmatter `related`.
 - For terminal-dragged or pasted image URLs, fetch/read the image, perform multimodal analysis, name it by visual semantics, and download it to `raw/{english-kebab-case}.{ext}`. Use the response `Content-Type` or URL extension to preserve `.png`, `.jpg`, `.jpeg`, `.webp`, or `.gif`; avoid opaque names such as `image-1.png` unless no semantic name is possible.
-- Use raw image embeds only for images that materially explain the page: diagrams, screenshots, architecture figures, numerical examples, visual comparisons, or other instructional visuals. Syntax: `![[raw/file.png]]` or `![[raw/file.png|600]]`.
+- Use raw image embeds only for images that materially explain the page: diagrams, screenshots, architecture figures, numerical examples, visual comparisons, or other instructional visuals. Always include a numeric display width: use `![[raw/file.png|360]]` for portrait images where the real width is smaller than the height, and `![[raw/file.png|600]]` for landscape or square images.
 - Place raw image embeds near the paragraph they clarify, usually after the explanatory sentence or before a detailed walkthrough. Do not put every image at the bottom.
 - Do not wrap image embeds in HTML, `<style>`, or inline CSS for centering. The vault's global `.obsidian/snippets/second-brain-markdown-images.css` snippet centers image embeds in Obsidian display; keep Markdown content canonical.
 - Cite non-image raw files, and image files used only as evidence/provenance, from wiki content page body text in an explicit source/evidence/provenance sentence using plain `[[raw/file.ext]]`.
@@ -136,7 +162,7 @@ Self-check before returning to ingest:
 
 ## Filename and Basic Memory Rules
 
-Basic Memory is the preferred MCP for `search_notes`, `write_note`, and `move_note` when available and synchronized. Always pass `project: second-brain` to Basic Memory MCP calls. For CLI fallback, use `basic-memory tool search-notes "<query>" --project second-brain --page-size <n>` and `basic-memory tool write-note ... --project second-brain`; do not rely on the current default project. Basic Memory 0.20.3 CLI does not expose `move-note`; filename correction should use MCP `move_note` when possible, or an explicit file/Obsidian move followed by `basic-memory reindex --project second-brain` and status verification.
+Basic Memory is the preferred MCP for `search_notes`, `write_note`, and `move_note` when available and synchronized. Always pass `project: second-brain` to Basic Memory MCP calls. For CLI fallback, use `basic-memory tool search-notes "<query>" --project second-brain --page-size <n>` and `basic-memory tool write-note ... --project second-brain`; do not rely on the current default project. Basic Memory CLI fallback remains preferred over Grep for semantic retrieval. Basic Memory 0.20.3 CLI does not expose `move-note`; filename correction should use MCP `move_note` when possible, or an explicit file/Obsidian move followed by `basic-memory reindex --project second-brain` and status verification.
 
 Do not write or edit `permalink`; Basic Memory daemon owns it.
 
@@ -164,14 +190,15 @@ Report blockage instead of claiming completion if any item is missing:
 - Source material was fully read, or unsupported/damaged/unfetchable sources were reported.
 - Domain-routing preflight ran over root `index.md`, all `wiki/*/_index.md`, and page search results before any write or new-domain proposal.
 - The user confirmed the preflight manifest, including domain placement, split granularity, create/update decisions, and any new-domain rationale.
-- Search-before-write ran from either clean Basic Memory search or Grep fallback, and create/update/confirm decisions were made per topic.
+- Search-before-write ran through the Basic Memory-first freshness gate; if dirty, one `--search` reindex was attempted before any Grep fallback.
+- Grep fallback, if used, was reported with the reason and residual-risk.
 - User-provided image URLs, if any, were analyzed, downloaded to `raw/` with semantic English kebab-case filenames, or explicitly reported as unusable.
 - All written wiki page filenames are English kebab-case.
 - Required frontmatter is present and source fields are semantically correct.
 - No forbidden scaffold was created.
 - Domain `_index.md` was synchronized.
 - New domains updated root `index.md` and graph color verification ran.
-- Manifest was generated with plain page paths rather than wikilinks.
-- Any raw references are wiki content page body references: non-image/evidence references use explicit source/evidence/provenance sentences, and instructional image references use canonical `![[raw/image.ext]]` embeds at semantically relevant positions.
+- Manifest was generated with plain page paths rather than wikilinks and included retrieval method plus Basic Memory sync status.
+- Any raw references are wiki content page body references: non-image/evidence references use explicit source/evidence/provenance sentences, and instructional image references use canonical `![[raw/image.ext|360]]` or `![[raw/image.ext|600]]` embeds at semantically relevant positions.
 - Image centering was left to the global Obsidian CSS snippet, not implemented with per-page HTML or inline CSS.
-- Journal was written or explicitly deferred.
+- Journal was written, or explicitly deferred while Basic Memory sync closure still ran for already-written wiki/raw/index changes.

@@ -12,7 +12,7 @@ The knowledge node is the processed wiki content page. The raw file supports tha
 wiki/{domain}/_index.md
   -> wiki/{domain}/{content-page}.md
        -> raw/source-file.ext
-       -> ![[raw/instructional-image.png]]
+       -> ![[raw/instructional-image.png|600]]
 ```
 
 For Web AI learning sessions, dragged browser image URLs are treated as user-provided image source assets: analyze the image, download it to `raw/`, name it by visual semantics, and embed it only where it explains the surrounding wiki content.
@@ -39,8 +39,11 @@ Use raw links for:
 Use canonical image embeds for instructional visuals:
 
 ```markdown
+![[raw/portrait-example.png|360]]
 ![[raw/cnn-convolution-numerical-example.png|600]]
 ```
+
+Raw image embeds must include a numeric display width. Use `|360` for portrait images where the real width is smaller than the height; use `|600` for landscape and square images.
 
 Image embeds are allowed only when the image materially explains the nearby content: diagrams, screenshots, architecture figures, numerical examples, visual comparisons, or other visual walkthroughs. Place the embed near the paragraph it clarifies instead of collecting all images at the bottom.
 

@@ -45,6 +45,12 @@ During ingest:
 3. Open each candidate body. Do not judge from titles, tags, `_index.md`, or search snippets.
 4. If the candidate is the same topic, update the existing page instead of creating a duplicate plus links.
 
+During lint:
+
+1. Use the Basic Memory-first freshness gate for broad semantic candidate discovery.
+2. Use Grep / `rg` only as fallback when Basic Memory MCP/CLI cannot be trusted after one search-only reindex, or as a narrow mechanical aid for locating existing links.
+3. Open the source and target page bodies before classifying an edge.
+
 ## Cross-Domain Rule
 
 Cross-domain links require a stronger test:
@@ -88,6 +94,6 @@ For every `delete` or `add`, give one concrete reason. Do not say only "related"
 
 ## Audit Boundary
 
-Link audit is semantic. Grep can find candidates but cannot decide validity.
+Link audit is semantic. Basic Memory and Grep can find candidates but cannot decide validity.
 
 Default behavior is report-only. Do not perform large-scale body rewrites without user confirmation.

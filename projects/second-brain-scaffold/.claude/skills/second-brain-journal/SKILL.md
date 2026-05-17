@@ -1,6 +1,6 @@
 ---
 name: second-brain-journal
-description: Write or append to the user's Second Brain daily journal at daily/YYYY-MM-DD.md. Use when the user says "写一下第二大脑日记", "second brain journal", "日记", or when second-brain-ingest hands off an ingest manifest. Enforces manifest coverage for preflight decisions and created/updated wiki pages without creating Obsidian graph links from daily notes.
+description: Write or append to <your-username>'s Second Brain daily journal at daily/YYYY-MM-DD.md. Use when the user says "写一下第二大脑日记", "second brain journal", "日记", or when second-brain-ingest hands off an ingest manifest. Enforces manifest coverage for preflight decisions and created/updated wiki pages without creating Obsidian graph links from daily notes.
 ---
 
 # Second Brain Journal
@@ -13,7 +13,7 @@ This skill is the renamed and tightened version of the old local `journal` skill
 
 Run the journal workflow completely before reporting done. The user should not need to say "follow the skill carefully"; every journal request already includes that requirement.
 
-Do not stop after identifying the date or drafting text. Determine the path, read or create the file, append without overwriting, enforce the no-internal-link boundary, and verify manifest coverage when an ingest manifest is provided. Stop early only if the user has no substantive session activity to record, or if the target file/tool is unavailable; report that state explicitly.
+Do not stop after identifying the date or drafting text. Determine the path, read or create the file, append without overwriting, enforce the no-internal-link boundary, verify manifest coverage when an ingest manifest is provided, then run the Basic Memory adaptive reindex closure. Stop early only if the user has no substantive session activity to record, or if the target file/tool is unavailable; report that state explicitly.
 
 In Claude Code, use the `AskUserQuestion` tool for every journal scope clarification or "ingest vs journal" clarification. Do not ask workflow questions as plain assistant text unless the current host does not expose that tool.
 
@@ -51,6 +51,7 @@ If system time is unavailable, use `??:??` and state that the timestamp is missi
 4. If present, append with a separator and `## HH:MM · summary`.
 5. If an ingest manifest is provided, cover every created/updated wiki content page and any domain-routing or new-domain decision.
 6. Verify all manifest pages appear at least once as plain text paths or slugs, not as daily wikilinks.
+7. Run the Basic Memory adaptive reindex closure.
 
 ## New File Skeleton
 
@@ -128,11 +129,34 @@ Forbidden:
 - `[[index]]`
 - `[[wiki/domain/_index]]`
 - `[[daily/...]]`
-- `[[CLAUDE]]`, `[[CLAUDE.md]]`, `[[AGENTS]]`, or `[[AGENTS.md]]`
+- `[[CLAUDE]]`, `[[CLAUDE.md]]`, `[[AGENTS]]`, `[[AGENTS.md]]`, `[[GEMINI]]`, or `[[GEMINI.md]]`
 - `[[raw/...]]`
 - Any Obsidian wikilink
 
 External `http(s)` links are allowed. Mention raw files only as plain text paths such as `raw/file.pdf`, preferably in backticks; do not use raw links as journal provenance edges.
+
+## Basic Memory Adaptive Reindex Closure
+
+After a journal file is successfully created or appended and rechecked, close Basic Memory sync from this skill. For normal ingest workflows that write a journal, this is the final sync point after wiki/raw/index and daily changes. Because journal is the end-of-work checkpoint, this closure rebuilds both the full-text search index and vector embeddings. Basic Memory 0.20.3 does not expose explicit reindex as an MCP tool; run the CLI command below for this checkpoint. Other workflows that change Markdown without writing a journal must run their own status/reindex/status closure; they may use search-only closure when they are not the final journal checkpoint.
+
+1. Run:
+
+```powershell
+basic-memory status --project second-brain --json
+```
+
+2. Always run the default full Basic Memory reindex after a journal write, even when the first status is already clean:
+
+```powershell
+basic-memory reindex --project second-brain
+```
+
+This intentionally runs both search and embeddings. In Basic Memory 0.20.3, embeddings reindex scans the project but uses chunk hashes to skip unchanged chunks, so it is appropriate for the journal checkpoint after a batch of work.
+
+3. Run `basic-memory status --project second-brain --json` again and verify it is clean.
+4. If the second status is still dirty, or either command fails, report `residual-risk` with the status details and do not claim full closure. If embeddings fail because sqlite-vec or the embedding provider is unavailable while search sync succeeded, report search clean plus embedding residual-risk explicitly.
+
+If no journal entry was written because there was no substantive session activity, do not run this closure. If ingest already wrote wiki/raw/index changes but the user deferred the journal, ingest must still run Basic Memory sync closure for those written files before returning; a later journal call will run closure again for the daily file.
 
 ## Completion Criteria
 
@@ -144,6 +168,8 @@ Report blockage instead of done if any applicable item is missing:
 - Any ingest manifest pages are mentioned as plain text paths or unambiguous slugs.
 - No `[[wikilink]]`, local Markdown link, or raw wikilink was added.
 - The written file was rechecked for manifest coverage and daily link policy before returning.
+- Basic Memory adaptive reindex closure ran after the journal write, or the no-journal/deferred-journal reason was explicitly reported.
+- After any journal write, `basic-memory reindex --project second-brain` ran regardless of the first status result, and the second status check verified clean; otherwise residual-risk was reported.
 
 ## Body Guidance
 

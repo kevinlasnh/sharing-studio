@@ -19,6 +19,8 @@
 | [`agent-memory-stack`](./projects/agent-memory-stack/) | 为 Claude Code、Codex、Gemini CLI 等 AI 编程 agent 配置跨 session 记忆规则。 | 稳定 |
 | [`second-brain-scaffold`](./projects/second-brain-scaffold/) | 用 Obsidian + Basic Memory 搭建 AI 辅助 ingest、query、lint、journal 的知识库骨架。 | Beta |
 | [`gtd-todoist`](./projects/gtd-todoist/) | 基于 Todoist 的 GTD agent 执行脚手架，包含 skills、仅提醒 cron 和健康检查。 | Beta |
+| [`agent-workflows`](./projects/agent-workflows/) | 用于部署方案调研和安全审查的重型 research / review Skills。 | Beta |
+| [`sharing-studio-sync`](./projects/sharing-studio-sync/) | 从本机真源脚手架同步并发布本仓库的 workflow。 | Experimental |
 
 ## 架构
 
@@ -27,14 +29,19 @@ flowchart LR
   A[AI coding agent] --> B[agent-memory-stack]
   A --> C[second-brain-scaffold]
   A --> D[gtd-todoist]
+  A --> F[agent-workflows]
+  A --> G[sharing-studio-sync]
 
   B --> B1[L1: 仓库记忆]
   C --> C1[L2: 个人知识库脚手架]
   D --> D1[任务执行脚手架]
+  F --> F1[调研与审查 workflow]
+  G --> G1[公开脚手架发布]
 
   B1 --> E[持久上下文]
   C1 --> E
   D1 --> E
+  F1 --> E
 ```
 
 ## 快速开始
@@ -52,7 +59,9 @@ sharing-studio/
 ├── projects/
 │   ├── agent-memory-stack/          # L1 仓库记忆 router 模板
 │   ├── second-brain-scaffold/       # L2 Obsidian vault 脚手架
-│   └── gtd-todoist/                 # Todoist GTD agent harness
+│   ├── gtd-todoist/                 # Todoist GTD agent harness
+│   ├── agent-workflows/             # 重型调研 / 审查 Skills
+│   └── sharing-studio-sync/         # 仓库发布同步 workflow
 ├── README.md
 ├── README.zh-CN.md
 └── LICENSE

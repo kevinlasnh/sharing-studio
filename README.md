@@ -19,6 +19,8 @@
 | [`agent-memory-stack`](./projects/agent-memory-stack/) | Persistent memory rules for AI coding agents across Claude Code, Codex, and Gemini CLI. | Stable |
 | [`second-brain-scaffold`](./projects/second-brain-scaffold/) | An Obsidian + Basic Memory vault scaffold for AI-assisted ingest, query, lint, and journaling. | Beta |
 | [`gtd-todoist`](./projects/gtd-todoist/) | A GTD Todoist harness with agent skills, reminder-only cron jobs, and a health-check auditor. | Beta |
+| [`agent-workflows`](./projects/agent-workflows/) | Heavy research and review Skills for deployment planning and safety review. | Beta |
+| [`sharing-studio-sync`](./projects/sharing-studio-sync/) | A publication workflow for syncing this repo from local source-of-truth scaffolds. | Experimental |
 
 ## Architecture
 
@@ -27,14 +29,19 @@ flowchart LR
   A[AI coding agent] --> B[agent-memory-stack]
   A --> C[second-brain-scaffold]
   A --> D[gtd-todoist]
+  A --> F[agent-workflows]
+  A --> G[sharing-studio-sync]
 
   B --> B1[L1: repo memory]
   C --> C1[L2: personal knowledge vault scaffold]
   D --> D1[Task execution scaffold]
+  F --> F1[Research and review workflow]
+  G --> G1[Public scaffold publishing]
 
   B1 --> E[Persistent context]
   C1 --> E
   D1 --> E
+  F1 --> E
 ```
 
 ## Quick Start
@@ -52,7 +59,9 @@ sharing-studio/
 ├── projects/
 │   ├── agent-memory-stack/          # L1 repo memory router templates
 │   ├── second-brain-scaffold/       # L2 Obsidian vault scaffold
-│   └── gtd-todoist/                 # Todoist GTD agent harness
+│   ├── gtd-todoist/                 # Todoist GTD agent harness
+│   ├── agent-workflows/             # heavy research/review Skills
+│   └── sharing-studio-sync/         # repo publication workflow
 ├── README.md
 ├── README.zh-CN.md
 └── LICENSE

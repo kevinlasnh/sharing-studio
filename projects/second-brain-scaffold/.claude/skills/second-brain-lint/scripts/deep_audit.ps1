@@ -264,6 +264,90 @@ function Test-RawImagePath {
     return ($cleanPath -match '\.(png|jpg|jpeg|webp|gif)$')
 }
 
+function Get-RawImageDimensions {
+    param([string]$RawPath)
+
+    $cleanPath = (($RawPath -split '[?#]', 2)[0])
+    if ([string]::IsNullOrWhiteSpace($cleanPath)) {
+        return $null
+    }
+
+    $fullPath = Join-Path -Path $resolvedRoot -ChildPath $cleanPath
+    if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+        return $null
+    }
+
+    $ffprobe = Get-Command ffprobe -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -ne $ffprobe) {
+        try {
+            $dimensionText = & $ffprobe.Source -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 $fullPath 2>$null |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                Select-Object -First 1
+            if ($dimensionText -match '^(\d+)x(\d+)$') {
+                return [pscustomobject]@{ Width = [int]$Matches[1]; Height = [int]$Matches[2] }
+            }
+        } catch {
+            # Fall through to System.Drawing for formats it can decode.
+        }
+    }
+
+    try {
+        Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
+        $image = [System.Drawing.Image]::FromFile($fullPath)
+        try {
+            return [pscustomobject]@{ Width = [int]$image.Width; Height = [int]$image.Height }
+        } finally {
+            $image.Dispose()
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Get-ExpectedRawImageDisplayWidth {
+    param([string]$RawPath)
+
+    $dimensions = Get-RawImageDimensions -RawPath $RawPath
+    if ($null -eq $dimensions) {
+        return $null
+    }
+    if ([int]$dimensions.Width -lt [int]$dimensions.Height) {
+        return 360
+    }
+    return 600
+}
+
+function Test-RawImageDisplayWidth {
+    param(
+        [string]$RawPath,
+        [string]$Display
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Display)) {
+        return "raw image embeds must include explicit width: use |360 for portrait images and |600 for landscape or square images"
+    }
+
+    $trimmed = $Display.Trim()
+    if ($trimmed -notmatch '^\d+$') {
+        return "raw image embed width must be a single numeric width, not '$trimmed'"
+    }
+
+    $actual = [int]$trimmed
+    $expected = Get-ExpectedRawImageDisplayWidth -RawPath $RawPath
+    if ($null -eq $expected) {
+        if (@(360, 600) -notcontains $actual) {
+            return "raw image embed width must be |360 or |600 when image dimensions cannot be read"
+        }
+        return $null
+    }
+
+    if ($actual -ne [int]$expected) {
+        return "raw image embed width must be |$expected for this image orientation, got |$actual"
+    }
+
+    return $null
+}
+
 $allMarkdownFiles = Get-ChildItem -LiteralPath $resolvedRoot -Recurse -Filter "*.md" -File |
     Where-Object {
         $vaultPath = Convert-ToVaultPath $_.FullName
@@ -373,10 +457,10 @@ $graphConfigIssues = New-Object System.Collections.Generic.List[object]
 $graphPath = Join-Path -Path $resolvedRoot -ChildPath ".obsidian\graph.json"
 $expectedGraphGroups = @(
     [pscustomobject]@{ query = 'file:index -file:_index'; rgb = 5682409 },
-    [pscustomobject]@{ query = 'file:CLAUDE OR file:AGENTS'; rgb = 13983232 },
+    [pscustomobject]@{ query = 'file:CLAUDE OR file:AGENTS OR file:GEMINI'; rgb = 13983232 },
     [pscustomobject]@{ query = 'file:_index'; rgb = 29362 },
-    [pscustomobject]@{ query = 'path:"daily"'; rgb = 15787074 },
-    [pscustomobject]@{ query = 'path:"wiki"'; rgb = 40563 }
+    [pscustomobject]@{ query = 'path:"daily/"'; rgb = 15787074 },
+    [pscustomobject]@{ query = 'path:"wiki/"'; rgb = 40563 }
 )
 $graphSnippetName = "second-brain-graph-colors"
 $graphSnippetPath = Join-Path -Path $resolvedRoot -ChildPath ".obsidian\snippets\$graphSnippetName.css"
@@ -546,6 +630,19 @@ foreach ($link in @($links)) {
         })
     } else {
         if ($isRawImageEmbed) {
+            $display = if ($link.PSObject.Properties.Name -contains "display") { [string]$link.display } else { $null }
+            $widthIssue = Test-RawImageDisplayWidth -RawPath $rawTargetInfo.RawPath -Display $display
+            if ($null -ne $widthIssue) {
+                $rawLinkBoundaryViolations.Add([pscustomobject]@{
+                    source = $link.source
+                    target = $link.target
+                    line = $link.line
+                    context = $link.context
+                    issue = $widthIssue
+                    link_type = "raw-image-embed-width"
+                    display = $display
+                })
+            }
             $contextIssue = Test-RawForbiddenContext -LineText ([string]$link.context)
             if ($null -ne $contextIssue) {
                 $rawLinkBoundaryViolations.Add([pscustomobject]@{

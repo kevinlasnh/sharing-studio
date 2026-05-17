@@ -290,6 +290,90 @@ function Test-RawImagePath {
     return ($cleanPath -match '\.(png|jpg|jpeg|webp|gif)$')
 }
 
+function Get-RawImageDimensions {
+    param([string]$RawPath)
+
+    $cleanPath = (($RawPath -split '[?#]', 2)[0])
+    if ([string]::IsNullOrWhiteSpace($cleanPath)) {
+        return $null
+    }
+
+    $fullPath = Join-Path -Path (Get-VaultRoot) -ChildPath $cleanPath
+    if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+        return $null
+    }
+
+    $ffprobe = Get-Command ffprobe -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -ne $ffprobe) {
+        try {
+            $dimensionText = & $ffprobe.Source -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 $fullPath 2>$null |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                Select-Object -First 1
+            if ($dimensionText -match '^(\d+)x(\d+)$') {
+                return [pscustomobject]@{ Width = [int]$Matches[1]; Height = [int]$Matches[2] }
+            }
+        } catch {
+            # Fall through to System.Drawing for formats it can decode.
+        }
+    }
+
+    try {
+        Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue
+        $image = [System.Drawing.Image]::FromFile($fullPath)
+        try {
+            return [pscustomobject]@{ Width = [int]$image.Width; Height = [int]$image.Height }
+        } finally {
+            $image.Dispose()
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Get-ExpectedRawImageDisplayWidth {
+    param([string]$RawPath)
+
+    $dimensions = Get-RawImageDimensions -RawPath $RawPath
+    if ($null -eq $dimensions) {
+        return $null
+    }
+    if ([int]$dimensions.Width -lt [int]$dimensions.Height) {
+        return 360
+    }
+    return 600
+}
+
+function Test-RawImageDisplayWidth {
+    param(
+        [string]$RawPath,
+        [string]$Display
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Display)) {
+        return "raw image embeds must include explicit width: use |360 for portrait images and |600 for landscape or square images"
+    }
+
+    $trimmed = $Display.Trim()
+    if ($trimmed -notmatch '^\d+$') {
+        return "raw image embed width must be a single numeric width, not '$trimmed'"
+    }
+
+    $actual = [int]$trimmed
+    $expected = Get-ExpectedRawImageDisplayWidth -RawPath $RawPath
+    if ($null -eq $expected) {
+        if (@(360, 600) -notcontains $actual) {
+            return "raw image embed width must be |360 or |600 when image dimensions cannot be read"
+        }
+        return $null
+    }
+
+    if ($actual -ne [int]$expected) {
+        return "raw image embed width must be |$expected for this image orientation, got |$actual"
+    }
+
+    return $null
+}
+
 function Get-ProposedSnippets {
     param($Hook)
 
@@ -333,7 +417,7 @@ function Test-RawLinks {
 
     $lines = $Text -split "`r?`n"
     $scanLines = Get-ScanLines -Lines $lines -TrackFrontmatter ($Kind -eq "full-file")
-    $wikilinkPattern = [regex]::new('(!?)\[\[([^\]\|#]+)(?:#[^\]\|]+)?(?:\|[^\]]+)?\]\]', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $wikilinkPattern = [regex]::new('(!?)\[\[([^\]\|#]+)(?:#[^\]\|]+)?(?:\|([^\]]+))?\]\]', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     $localMarkdownLinkPattern = [regex]::new('!?\[[^\]]*\]\((?!https?://)([^)\s]+)[^)]*\)', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 
     foreach ($line in $scanLines) {
@@ -366,6 +450,11 @@ function Test-RawLinks {
                 $violations.Add(("{0}: raw wikilinks must stay in body source/evidence sentences, not frontmatter: {1}" -f $line.Number, $line.Text.Trim()))
             } else {
                 if ($isRawImageEmbed) {
+                    $display = if ($match.Groups[3].Success) { $match.Groups[3].Value } else { $null }
+                    $widthIssue = Test-RawImageDisplayWidth -RawPath $rawTargetInfo.RawPath -Display $display
+                    if ($null -ne $widthIssue) {
+                        $violations.Add(("{0}: {1}: {2}" -f $line.Number, $widthIssue, $line.Text.Trim()))
+                    }
                     $contextIssue = Test-RawForbiddenContext -LineText $line.Text
                     if ($null -ne $contextIssue) {
                         $violations.Add(("{0}: {1}: {2}" -f $line.Number, $contextIssue, $line.Text.Trim()))

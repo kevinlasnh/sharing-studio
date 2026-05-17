@@ -1,6 +1,6 @@
 ---
 name: second-brain-graph-manager
-description: Manage Obsidian graph colors for the user's Second Brain vault. Use when the user says "重刷图谱颜色", "graph colors", "图谱色组", when second-brain-ingest creates a new domain, or when .obsidian/graph.json / graph CSS snippets must be verified or repaired. Maintains the vault's 5 colorGroups plus the raw attachment node color, and closes Graph View before writes.
+description: Manage Obsidian graph colors for <your-username>'s Second Brain vault. Use when the user says "重刷图谱颜色", "graph colors", "图谱色组", when second-brain-ingest creates a new domain, or when .obsidian/graph.json / graph CSS snippets must be verified or repaired. Maintains the vault's 5 colorGroups plus the raw attachment node color, and closes Graph View before writes.
 ---
 
 # Second Brain Graph Manager
@@ -24,12 +24,12 @@ Do not enforce a global graph `search` filter. The default Graph View may show a
 | Order | Query | Hex | Decimal rgb | Meaning |
 |---|---|---|---|---|
 | 1 | `file:index -file:_index` | `#56B4E9` | `5682409` | root index |
-| 2 | `file:CLAUDE OR file:AGENTS` | `#D55E00` | `13983232` | agent config (`CLAUDE.md` and `AGENTS.md`) |
+| 2 | `file:CLAUDE OR file:AGENTS OR file:GEMINI` | `#D55E00` | `13983232` | agent config (`CLAUDE.md`, `AGENTS.md`, and `GEMINI.md`) |
 | 3 | `file:_index` | `#0072B2` | `29362` | domain indexes |
-| 4 | `path:"daily"` | `#F0E442` | `15787074` | daily journal |
-| 5 | `path:"wiki"` | `#009E73` | `40563` | wiki content pages |
+| 4 | `path:"daily/"` | `#F0E442` | `15787074` | daily journal |
+| 5 | `path:"wiki/"` | `#009E73` | `40563` | wiki content pages |
 
-The order is semantic. Obsidian uses first match; `file:_index` must stay before `path:"wiki"`. `CLAUDE.md` and `AGENTS.md` must stay in the same agent config color group.
+The order is semantic. Obsidian uses first match; `file:_index` must stay before `path:"wiki/"`. `CLAUDE.md`, `AGENTS.md`, and `GEMINI.md` must stay in the same agent config color group. Keep folder path queries slash-terminated so content files with names like `gtd-daily-workflow.md` do not match the daily journal group.
 
 ## Raw Attachment Color Contract
 
@@ -77,7 +77,7 @@ If Obsidian CLI is unavailable, report the limitation before editing. Prefer not
 
 ```json
 {
-  "query": "path:\"wiki\"",
+  "query": "path:\"wiki/\"",
   "color": {
     "a": 1,
     "rgb": 40563
