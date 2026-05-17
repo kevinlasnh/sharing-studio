@@ -1,11 +1,21 @@
 # agent-memory-stack
 
-Router templates for persistent AI coding-agent memory across Claude Code, Codex, and Gemini CLI.
+Persistent memory rules for AI coding agents that need to survive beyond a single chat window.
+
+<p>
+  <img alt="Layer L1" src="https://img.shields.io/badge/layer-L1-0f766e?style=flat-square">
+  <img alt="Cross runtime" src="https://img.shields.io/badge/runtime-Claude%20Code%20%7C%20Codex%20%7C%20Gemini-2563eb?style=flat-square">
+  <img alt="Publish safe" src="https://img.shields.io/badge/publish-redacted-7c3aed?style=flat-square">
+</p>
 
 > [!NOTE]
-> This project publishes the memory rules and redacted configuration templates only. Real planning files, ByteRover context trees, credentials, and local paths stay outside Git.
+> This project publishes memory rules and redacted configuration templates only. Real planning files, ByteRover context trees, credentials, and local paths stay outside Git.
 
-## What It Provides
+## What It Solves
+
+AI coding agents forget context when a session ends. This scaffold gives Claude Code, Codex, and Gemini CLI the same operating model for short-term task continuity and long-term repository knowledge.
+
+## What's Included
 
 ```text
 agent-memory-stack/
@@ -16,33 +26,27 @@ agent-memory-stack/
     └── claude-settings.example.json # Claude Code SessionStart hook example
 ```
 
-The three router files keep the same body text while using tool-specific H1 titles. They define one memory model that each runtime can follow.
+The three router files keep the same body text while using tool-specific H1 titles.
 
 ## Memory Model
 
-| Layer | Purpose | Backing store |
+| Layer | Purpose | Backing Store |
 | :--- | :--- | :--- |
-| L1-1 | Current model context window | Runtime context |
-| L1-2 | Session continuity and task state | `task_plan.md`, `progress.md`, `findings.md` |
-| L1-3 | Durable per-repo decisions and findings | ByteRover `.brv/context-tree/` |
+| L1-1 | Current session context | Runtime context window |
+| L1-2 | Task state and session handoff | `task_plan.md`, `progress.md`, `findings.md` |
+| L1-3 | Durable repository decisions and findings | ByteRover `.brv/context-tree/` |
 
 ```mermaid
 flowchart TD
   A[L1-1 context window] --> B[L1-2 planning files]
   B --> C[L1-3 ByteRover knowledge]
+  C --> D[Future sessions]
+  D --> B
 ```
-
-## Key Rules
-
-- Load planning context at session start when the current directory is inside an L1 repo.
-- Keep web, API, and third-party content out of `task_plan.md`; write it to `findings.md` instead.
-- Treat `progress.md` as append-only project history.
-- Curate long-term knowledge into ByteRover only through the explicit sedimentation workflow.
-- In Git worktrees, merge planning files intentionally and avoid concurrent ByteRover writes.
 
 ## Quick Start
 
-Copy the router file for the runtime you use:
+Copy the router file for your runtime:
 
 ```powershell
 # Claude Code
@@ -57,10 +61,18 @@ Copy-Item .\global\GEMINI.md $HOME\.gemini\GEMINI.md
 
 For Claude Code, review `global/claude-settings.example.json` before merging the SessionStart hook into a real settings file.
 
+## Operating Rules
+
+- Load planning context at session start when the current directory is an L1 repository.
+- Keep web, API, and third-party content out of `task_plan.md`; write it to `findings.md` instead.
+- Treat `progress.md` as append-only project history.
+- Curate durable decisions into ByteRover only through an explicit sedimentation workflow.
+- In Git worktrees, merge planning files intentionally and avoid concurrent ByteRover writes.
+
 ## Dependencies
 
-- `planning-with-files` for Claude Code hook-driven planning-file injection.
-- ByteRover CLI (`brv`) if you want the L1-3 long-term layer.
+- `planning-with-files` for hook-driven planning-file context.
+- ByteRover CLI (`brv`) for the L1-3 long-term layer.
 - A runtime that loads the relevant router file at startup.
 
 ## Privacy Boundary

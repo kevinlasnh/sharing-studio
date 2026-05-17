@@ -1,11 +1,21 @@
 # gtd-todoist
 
-A GTD harness for AI agents that manage Todoist through a CLI while cron only sends reminders.
+A GTD scaffold where AI agents reason about Todoist, while scheduled jobs only remind the user to start review flows.
+
+<p>
+  <img alt="GTD" src="https://img.shields.io/badge/method-GTD-0f766e?style=flat-square">
+  <img alt="Todoist" src="https://img.shields.io/badge/tool-Todoist-dc2626?style=flat-square">
+  <img alt="Reminder only" src="https://img.shields.io/badge/cron-reminder--only-2563eb?style=flat-square">
+</p>
 
 > [!IMPORTANT]
 > Cron jobs in this scaffold do not mutate Todoist. They only remind the user to start a flow in the main chat session, where the agent proposes changes and waits for confirmation.
 
-## What It Provides
+## What It Solves
+
+Todoist automation is risky when task titles, labels, and due dates can be rewritten without review. This scaffold keeps the agent in the main conversation, uses stable task IDs for writes, and keeps cron as a reminder layer only.
+
+## What's Included
 
 ```text
 gtd-todoist/
@@ -26,16 +36,8 @@ gtd-todoist/
 | :--- | :--- |
 | `gtd-inbox-triage` | Clarify Inbox items and route them to next action, waiting, project, someday, or done. |
 | `gtd-daily-review` | Review today's completed, unfinished, overdue, Inbox, and tomorrow items. |
-| `gtd-weekly-review` | Run a GTD weekly review across Get Clear, Get Current, and Get Creative. |
-| `health-check` | Read-only audit of workspace files, skill contracts, runtime visibility, and reminder-only cron. |
-
-## Core Rules
-
-- The main chat session owns all execution and user confirmation.
-- Cron reminders are isolated prompts, not automation authority.
-- Todoist writes must use stable task IDs or Todoist URLs, not task titles.
-- `td task update --labels` replaces labels, so agents must read and merge existing labels before writing.
-- Destructive or batch actions require explicit item-by-item approval.
+| `gtd-weekly-review` | Run a weekly review across Get Clear, Get Current, and Get Creative. |
+| `health-check` | Run a read-only audit of workspace files, skill contracts, runtime visibility, and reminder-only cron. |
 
 ## Quick Start
 
@@ -45,8 +47,16 @@ gtd-todoist/
 4. Copy the three `skills/<name>/SKILL.md` files into the target agent workspace.
 5. Append [`agents-section.md`](./agents-section.md) to the target `AGENTS.md` or equivalent router file.
 6. Replace placeholder delivery values such as `<TELEGRAM_USER_ID>`, `<BOT_ACCOUNT>`, and timezone.
-7. Add the reminder-only cron jobs.
+7. Add reminder-only cron jobs.
 8. Run the health check before relying on the setup.
+
+## Core Rules
+
+- The main chat session owns execution and user confirmation.
+- Cron reminders are isolated prompts, not automation authority.
+- Todoist writes must use stable task IDs or Todoist URLs, not task titles.
+- `td task update --labels` replaces labels, so agents must read and merge existing labels before writing.
+- Destructive or batch actions require explicit item-by-item approval.
 
 ## Dependencies
 

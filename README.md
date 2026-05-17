@@ -1,56 +1,64 @@
 <h1 align="center">sharing-studio</h1>
 
 <p align="center">
-  <em>Reusable agent memory, knowledge, and task-system scaffolds.</em>
+  <strong>Public scaffolds for agent memory, knowledge work, GTD, and heavy deployment workflows.</strong>
 </p>
 
 <p align="center">
-  <a href="./README.md"><img alt="lang: English" src="https://img.shields.io/badge/lang-English-blue?style=flat-square"></a>
-  <a href="./README.zh-CN.md"><img alt="lang: 简体中文" src="https://img.shields.io/badge/lang-简体中文-red?style=flat-square"></a>
+  <img alt="Public scaffolds" src="https://img.shields.io/badge/public-scaffolds-0f766e?style=for-the-badge">
+  <img alt="Agent workflows" src="https://img.shields.io/badge/agent-workflows-2563eb?style=for-the-badge">
+  <img alt="Privacy first" src="https://img.shields.io/badge/privacy-first-7c3aed?style=for-the-badge">
 </p>
 
+<!-- README-I18N:START -->
+<p align="center">
+  <strong>English</strong> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
+<!-- README-I18N:END -->
+
 > [!NOTE]
-> This repository publishes scaffolds only. It intentionally excludes private notes, real task data, local planning files, runtime state, API tokens, and machine-specific paths.
+> This repository publishes reusable structure only. It intentionally excludes private notes, real task data, local planning files, runtime state, credentials, and machine-specific paths.
 
-## What's Inside
+## Choose A Scaffold
 
-| Project | Use it when you need | Status |
-| :--- | :--- | :--- |
-| [`agent-memory-stack`](./projects/agent-memory-stack/) | Persistent memory rules for AI coding agents across Claude Code, Codex, and Gemini CLI. | Stable |
-| [`second-brain-scaffold`](./projects/second-brain-scaffold/) | An Obsidian + Basic Memory vault scaffold for AI-assisted ingest, query, lint, and journaling. | Beta |
-| [`gtd-todoist`](./projects/gtd-todoist/) | A GTD Todoist harness with agent skills, reminder-only cron jobs, and a health-check auditor. | Beta |
-| [`agent-workflows`](./projects/agent-workflows/) | Heavy research and review Skills for deployment planning and safety review. | Beta |
-| [`sharing-studio-sync`](./projects/sharing-studio-sync/) | A publication workflow for syncing this repo from local source-of-truth scaffolds. | Experimental |
+| Project | Best For | What You Get | Status |
+| :--- | :--- | :--- | :--- |
+| [`agent-memory-stack`](./projects/agent-memory-stack/) | Persistent agent context across coding sessions | Cross-runtime router templates for Claude Code, Codex, and Gemini CLI | Stable |
+| [`second-brain-scaffold`](./projects/second-brain-scaffold/) | AI-assisted personal knowledge vaults | Obsidian, Basic Memory, local skills, hooks, and graph guardrails | Beta |
+| [`gtd-todoist`](./projects/gtd-todoist/) | GTD workflows mediated by an agent | Todoist skill contracts, reminder-only cron, and health checks | Beta |
+| [`agent-workflows`](./projects/agent-workflows/) | High-stakes deployment planning | Heavy research and heavy review skills with file-backed evidence contracts | Beta |
+| [`sharing-studio-sync`](./projects/sharing-studio-sync/) | Publishing this hub from local truth | A guarded sync pipeline for redacted public scaffolds | Experimental |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  A[AI coding agent] --> B[agent-memory-stack]
-  A --> C[second-brain-scaffold]
-  A --> D[gtd-todoist]
-  A --> F[agent-workflows]
-  A --> G[sharing-studio-sync]
+  U[User] --> A[AI coding agent]
+  A --> M[agent-memory-stack]
+  A --> B[second-brain-scaffold]
+  A --> G[gtd-todoist]
+  A --> W[agent-workflows]
+  A --> S[sharing-studio-sync]
 
-  B --> B1[L1: repo memory]
-  C --> C1[L2: personal knowledge vault scaffold]
-  D --> D1[Task execution scaffold]
-  F --> F1[Research and review workflow]
-  G --> G1[Public scaffold publishing]
+  M --> M1[L1 repo memory]
+  B --> B1[L2 knowledge vault]
+  G --> G1[Task execution]
+  W --> W1[Research and review]
+  S --> S1[Public publishing]
 
-  B1 --> E[Persistent context]
-  C1 --> E
-  D1 --> E
-  F1 --> E
+  M1 --> C[Reusable operating context]
+  B1 --> C
+  G1 --> C
+  W1 --> C
 ```
 
 ## Quick Start
 
-1. Open the project directory that matches your use case.
-2. Read that project's README for dependencies and deployment steps.
-3. Copy only the scaffold files you need.
+1. Pick the project that matches your workflow.
+2. Read that project's README for dependencies, expected runtime, and safety boundaries.
+3. Copy only the scaffold files you need into your own workspace.
 4. Replace placeholders such as `<vault-path>`, `<agent-workspace>`, `<TELEGRAM_USER_ID>`, and `<BOT_ACCOUNT>`.
-5. Keep real credentials, task data, notes, and local state outside Git.
+5. Keep real credentials, notes, task data, and runtime state outside Git.
 
 ## Repository Layout
 
@@ -60,8 +68,8 @@ sharing-studio/
 │   ├── agent-memory-stack/          # L1 repo memory router templates
 │   ├── second-brain-scaffold/       # L2 Obsidian vault scaffold
 │   ├── gtd-todoist/                 # Todoist GTD agent harness
-│   ├── agent-workflows/             # heavy research/review Skills
-│   └── sharing-studio-sync/         # repo publication workflow
+│   ├── agent-workflows/             # heavy research and review skills
+│   └── sharing-studio-sync/         # guarded publication workflow
 ├── README.md
 ├── README.zh-CN.md
 └── LICENSE
@@ -69,25 +77,30 @@ sharing-studio/
 
 ## Design Principles
 
-- **Scaffold over data.** The repository ships structure, guardrails, and workflows, not private content.
-- **User approval stays explicit.** Destructive, batch, or high-risk actions are proposal-first.
-- **External content is untrusted.** Web pages, API responses, and pasted source material do not go into files that are repeatedly injected as agent instructions.
-- **Each project can graduate.** Every scaffold lives under `projects/<name>/` and can be split into a standalone repository later.
+- **Scaffold over data.** Publish reusable structure, not private content.
+- **Explicit user control.** Destructive, batch, or high-risk actions stay proposal-first.
+- **External content is untrusted.** Web pages, API responses, and pasted source material do not become persistent agent instructions.
+- **Local state stays local.** Runtime files can help worktree coordination, but protected paths must not be pushed.
+- **Projects can graduate.** Each scaffold lives under `projects/<name>/` and can later split into a standalone repository.
 
-## Privacy Boundary
+## Publishing Boundary
 
-The repo is intended to be safe to publish. These paths are ignored and should remain local:
+The public repo should never contain repo-root runtime state such as:
 
 ```text
-.claude/
-.brv/
-task_plan.md
-findings.md
-progress.md
-.env
-.env.*
-*.key
-*.pem
+/.claude/
+/.agents/
+/.codex/
+/.gemini/
+/.workflows/
+/.brv/
+/task_plan.md
+/findings.md
+/progress.md
+/.env
+/.env.*
+/*.key
+/*.pem
 ```
 
 Before publishing changes, scan for secrets, real local paths, account IDs, private IPs, and personal content.

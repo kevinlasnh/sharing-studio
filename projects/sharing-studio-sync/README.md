@@ -1,11 +1,21 @@
 # sharing-studio-sync
 
-A repository sync workflow for publishing Kevin's current local agent scaffolds into this public `sharing-studio` hub.
+A guarded publication workflow for keeping this public hub aligned with local source-of-truth scaffolds.
+
+<p>
+  <img alt="Publish pipeline" src="https://img.shields.io/badge/type-publication%20pipeline-0f766e?style=flat-square">
+  <img alt="Redacted sync" src="https://img.shields.io/badge/sync-redacted-2563eb?style=flat-square">
+  <img alt="Push protected" src="https://img.shields.io/badge/push-protected-7c3aed?style=flat-square">
+</p>
 
 > [!WARNING]
 > This project is a publication workflow, not a backup tool. It must never publish private notes, real Todoist tasks, credentials, runtime state, or local planning files.
 
-## What It Provides
+## What It Solves
+
+The live scaffolds used by local agents can move faster than the public `sharing-studio` repository. This skill turns publishing into a repeatable pipeline with source discovery, redaction, checks, and protected push review.
+
+## What's Included
 
 ```text
 sharing-studio-sync/
@@ -15,23 +25,34 @@ sharing-studio-sync/
         └── preflight-sharing-studio-sync.ps1
 ```
 
-The Skill keeps public scaffolds aligned with local source-of-truth systems:
+## Sync Scope
 
-| Domain | Public target |
+| Domain | Public Target |
 | :--- | :--- |
 | L1 memory rules | `projects/agent-memory-stack/` |
 | L2 Second Brain scaffold | `projects/second-brain-scaffold/` |
 | GTD Todoist harness | `projects/gtd-todoist/` |
-| Heavy research/review workflows | `projects/agent-workflows/` |
+| Heavy research and review workflows | `projects/agent-workflows/` |
+| Publication workflow | `projects/sharing-studio-sync/` |
 
 ## Workflow
 
-1. Discover local source-of-truth files.
-2. Compare them with the public scaffold copies in this repo.
-3. Copy or rewrite only public-safe scaffold files.
-4. Replace private paths and account details with placeholders.
-5. Run secret, path, parser, and protected-push checks.
-6. Ask for user review before commit and push.
+```mermaid
+flowchart LR
+  A[Discover local truth] --> B[Compare public scaffolds]
+  B --> C[Update redacted files]
+  C --> D[Run scans]
+  D --> E[Review diff]
+  E --> F[Commit]
+  F --> G[Protected push]
+```
+
+## Safety Checks
+
+- Verify expected public project directories exist.
+- Confirm source-of-truth router and skill paths are available.
+- Detect accidental staging of root-level protected paths.
+- Keep `.workflows/`, PWF files, `.brv`, root agent state, and credentials out of outgoing commits.
 
 ## Privacy Boundary
 
