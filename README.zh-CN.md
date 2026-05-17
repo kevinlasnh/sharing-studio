@@ -23,11 +23,11 @@
 
 | 项目 | 适合场景 | 你会得到什么 | 状态 |
 | :--- | :--- | :--- | :--- |
-| [`agent-memory-stack`](./projects/agent-memory-stack/) | 跨编码 session 保持 agent 上下文 | Claude Code、Codex、Gemini CLI 的跨宿主 router 模板 | Stable |
-| [`second-brain-scaffold`](./projects/second-brain-scaffold/) | AI 辅助的个人知识库 vault | Obsidian、Basic Memory、本地 skills、hooks 和图谱护栏 | Beta |
-| [`gtd-todoist`](./projects/gtd-todoist/) | 由 agent 介导的 GTD 工作流 | Todoist skill 契约、仅提醒 cron 和健康检查 | Beta |
-| [`agent-workflows`](./projects/agent-workflows/) | 高风险部署方案规划 | 带文件证据契约的重型调研和重型审查 skills | Beta |
-| [`sharing-studio-sync`](./projects/sharing-studio-sync/) | 从本机真源发布这个 hub | 面向脱敏公开脚手架的受保护同步流水线 | Experimental |
+| [`agent-memory-stack`](./projects/agent-memory-stack/README.zh-CN.md) | 跨编码 session 保持 agent 上下文 | Claude Code、Codex、Gemini CLI 的跨宿主 router 模板 | Stable |
+| [`second-brain-scaffold`](./projects/second-brain-scaffold/README.zh-CN.md) | AI 辅助的个人知识库 vault | Obsidian、Basic Memory、本地 skills、hooks 和图谱护栏 | Beta |
+| [`gtd-todoist`](./projects/gtd-todoist/README.zh-CN.md) | 由 agent 介导的 GTD 工作流 | Todoist skill 契约、仅提醒 cron 和健康检查 | Beta |
+| [`agent-workflows`](./projects/agent-workflows/README.zh-CN.md) | 高风险部署方案规划 | 带文件证据契约的重型调研和重型审查 skills | Beta |
+| [`sharing-studio-sync`](./projects/sharing-studio-sync/README.zh-CN.md) | 从本机真源发布这个 hub | 面向脱敏公开脚手架的受保护同步流水线 | Experimental |
 
 ## 架构
 

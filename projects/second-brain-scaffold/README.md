@@ -8,6 +8,12 @@ An Obsidian and Basic Memory vault scaffold for AI-assisted ingest, query, lint,
   <img alt="No real notes" src="https://img.shields.io/badge/content-scaffold--only-2563eb?style=flat-square">
 </p>
 
+<!-- README-I18N:START -->
+<p>
+  <strong>English</strong> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
+<!-- README-I18N:END -->
+
 > [!WARNING]
 > This directory is a scaffold, not a vault backup. It intentionally contains no real `wiki/`, `daily/`, `raw/`, or personal `index.md` content.
 

@@ -8,6 +8,12 @@ A guarded publication workflow for keeping this public hub aligned with local so
   <img alt="Push protected" src="https://img.shields.io/badge/push-protected-7c3aed?style=flat-square">
 </p>
 
+<!-- README-I18N:START -->
+<p>
+  <strong>English</strong> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
+<!-- README-I18N:END -->
+
 > [!WARNING]
 > This project is a publication workflow, not a backup tool. It must never publish private notes, real Todoist tasks, credentials, runtime state, or local planning files.
 

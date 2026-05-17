@@ -8,6 +8,12 @@ Persistent memory rules for AI coding agents that need to survive beyond a singl
   <img alt="Publish safe" src="https://img.shields.io/badge/publish-redacted-7c3aed?style=flat-square">
 </p>
 
+<!-- README-I18N:START -->
+<p>
+  <strong>English</strong> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
+<!-- README-I18N:END -->
+
 > [!NOTE]
 > This project publishes memory rules and redacted configuration templates only. Real planning files, ByteRover context trees, credentials, and local paths stay outside Git.
 

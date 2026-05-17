@@ -2,6 +2,12 @@
 
 A sanitized project-level MCP snippet for wiring Basic Memory into the Second Brain scaffold.
 
+<!-- README-I18N:START -->
+<p>
+  <strong>English</strong> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
+<!-- README-I18N:END -->
+
 > [!NOTE]
 > Use this directory as a template only. Keep real local paths, project IDs, provider credentials, and runtime state outside the public repository.
 

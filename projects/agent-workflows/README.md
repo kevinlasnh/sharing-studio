@@ -8,6 +8,12 @@ Heavy research and review skills for deployment plans that need evidence, tracea
   <img alt="File backed" src="https://img.shields.io/badge/evidence-file--backed-2563eb?style=flat-square">
 </p>
 
+<!-- README-I18N:START -->
+<p>
+  <strong>English</strong> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
+<!-- README-I18N:END -->
+
 > [!NOTE]
 > This project publishes the workflow skills and redacted contracts only. Runtime `.workflows/` sessions, deployment plans from real projects, review reports, and local planning files stay outside Git.
 

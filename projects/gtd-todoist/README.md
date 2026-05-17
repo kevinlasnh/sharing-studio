@@ -8,6 +8,12 @@ A GTD scaffold where AI agents reason about Todoist, while scheduled jobs only r
   <img alt="Reminder only" src="https://img.shields.io/badge/cron-reminder--only-2563eb?style=flat-square">
 </p>
 
+<!-- README-I18N:START -->
+<p>
+  <strong>English</strong> | <a href="./README.zh-CN.md">简体中文</a>
+</p>
+<!-- README-I18N:END -->
+
 > [!IMPORTANT]
 > Cron jobs in this scaffold do not mutate Todoist. They only remind the user to start a flow in the main chat session, where the agent proposes changes and waits for confirmation.
 
