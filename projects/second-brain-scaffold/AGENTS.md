@@ -14,7 +14,7 @@ permalink: second-brain/agents
 - **同步**：Google Drive
 - **定位**：跨项目、跨领域的个人 Second Brain vault
 - **底层**：Basic Memory MCP / daemon + Obsidian 原生 Markdown vault
-- **业务层**：本地 second-brain skills
+- **业务层**：本地 second-brain skills（`.claude/skills` / `.agents/skills` / `.gemini/skills` 三宿主同步）
 - **语法层**：全局 `obsidian-markdown` skill
 - **确定性防线**：`.claude/settings.json` hooks + `.claude/scripts/*.ps1`
 - **Obsidian CLI 前置**：需要 Obsidian 桌面端已打开，CLI 才能通过 IPC 操作应用状态
@@ -24,13 +24,14 @@ permalink: second-brain/agents
 Basic Memory 是本 vault 的底层存储与检索基础设施，不是 skill。它负责语义候选召回；磁盘 Markdown 正文仍是最终事实源。
 
 - `search_notes`：默认用于所有跨页面、大范围语义检索，走 BM25 + fastembed / bge-small-en-v1.5 hybrid search。
-- `write_note`：可用于创建 note，但文件名生成不完全可靠。
+- `write_note`：可用于创建 note，但不是唯一写入入口；所有创建结果仍必须通过路径、文件名、frontmatter / `permalink` 校验。
 - `move_note`：用于修正 Basic Memory 生成的不合规文件名。
 - 所有 Basic Memory MCP 调用必须显式传 `project: second-brain`；CLI fallback 必须显式带 `--project second-brain`，不依赖 Basic Memory 的当前默认 project。MCP 工具名使用下划线；CLI 工具入口使用 `basic-memory tool <tool-name>`，例如 `basic-memory tool search-notes "<query>" --project second-brain --page-size 10`。Basic Memory 0.20.3 CLI 未暴露 `move-note`，文件名修正优先用 MCP `move_note`；MCP 不可用时，用 Obsidian CLI / 文件系统移动后立即跑 `basic-memory reindex --project second-brain` 与 status 验证。
 - 在 Windows 上，Basic Memory CLI 命令必须串行执行，不要把 `status`、`tool search-notes`、`project info`、`reindex` 放进同一轮并行工具调用；Basic Memory 0.20.3 的日志清理可能在并发 CLI 进程间触发临时 FileNotFoundError 假失败。
-- daemon 自动给 Markdown 文件维护 `permalink:`；agent 不手写、不修改 `permalink`。
+- Basic Memory 配置中的 `ensure_frontmatter_on_sync` 必须保持 `false`。daemon 只负责监听、索引和检索，不再后台补写或改写 Markdown frontmatter，避免 Google DriveFS 上的原子替换竞争。
+- `permalink:` 由 vault schema 确定性维护：agent 不自由编写 `permalink`；新建或修复 Markdown 时必须按文件路径公式写入 / 校正。
 - `kebab_filenames: true` 已启用，但中文 title、`and/or`、数字、标点、`_index.md` 仍可能生成错误文件名。
-- Basic Memory 搜索结果必须按 `file_path` 过滤：wiki 内容候选只接受 `wiki/{domain}/{slug}.md` 且非 `_index.md`；`index.md` / `_index.md` 只作导航证据；`daily/` 默认排除，只有用户明确询问日记、时间线或 session 历史时才作普通路径/日期证据；`CLAUDE.md`、`AGENTS.md`、`GEMINI.md`、`.claude/**`、`.obsidian/**`、`raw/**` 不能作为知识页候选。
+- Basic Memory 搜索结果必须按 `file_path` 过滤：wiki 内容候选只接受 `wiki/{domain}/{slug}.md` 且非 `_index.md`；`index.md` / `_index.md` 只作导航证据；`daily/` 默认排除，只有用户明确询问日记、时间线或 session 历史时才作普通路径/日期证据；`CLAUDE.md`、`AGENTS.md`、`GEMINI.md`、`.claude/**`、`.agents/**`、`.gemini/**`、`.claudian/**`、`.workflows/**`、`.brv/**`、`.obsidian/**`、`templates/**`、`raw/**` 不能作为知识页候选。
 
 ### Basic Memory-first Semantic Retrieval Contract
 
@@ -50,13 +51,14 @@ Basic Memory 是本 vault 的底层存储与检索基础设施，不是 skill。
 
 ### Adaptive Reindex Closure
 
-Basic Memory 的 sync closure 用来保证下一次核心操作开始时索引应当 clean。正常 ingest 写入日记时，closure 由 `second-brain-journal` 作为最后同步点执行，并且默认跑 search + embeddings；其他写入型维护流程必须在自己的 workflow 末尾执行 status/reindex/status 闭环，不能把 dirty 状态留给下一次 ingest。
+Basic Memory 的 sync closure 用来保证下一次核心操作开始时索引应当 clean。正常 ingest 写入日记时，closure 由 `second-brain-journal` 作为最后同步点执行，并且默认跑 search + embeddings；随后必须 handoff 给 `second-brain-hf-backup` 完成 Hugging Face 远端 Git 快照。其他写入型维护流程必须在自己的 workflow 末尾执行 status/reindex/status 闭环，不能把 dirty 状态留给下一次 ingest。
 
-- 写入型工作流的完整闭环是：完成 wiki/raw/index 等内容写入 → 写 `daily/YYYY-MM-DD.md` 日记 → 由 `second-brain-journal` 做 Basic Memory adaptive reindex closure。
+- 写入型工作流的完整闭环是：完成 wiki/raw/index 等内容写入 → 写 `daily/YYYY-MM-DD.md` 日记 → 由 `second-brain-journal` 做 Basic Memory adaptive reindex closure → 由 `second-brain-hf-backup` 做 Hugging Face full Git snapshot push closure。
 - `second-brain-journal` 写完并复检日记后，必须运行 `basic-memory status --project second-brain --json`。
 - `second-brain-journal` 无论首个 status 是否 clean，都必须通过 CLI 运行 `basic-memory reindex --project second-brain`；Basic Memory 0.20.3 未暴露显式 reindex MCP tool。该默认命令同时重建 full-text search 与 embeddings。embeddings reindex 会扫描全项目，但用 chunk hash 跳过未变化 chunk，适合作为日记后的批量收口。
 - journal reindex 后必须再次运行 `basic-memory status --project second-brain --json` 验证 clean；如果 search 或 embeddings 任一失败，必须报告 residual-risk，不能声称完全闭环。
-- 若用户在 ingest 后明确暂缓日记，ingest 仍必须对已经写入的 wiki/raw/index 变化执行 interim search-only closure，并在最终回复中同时说明 `Journal pending`、Basic Memory file-sync clean/residual-risk 状态，以及 full embeddings checkpoint deferred until journal；之后补写日记时由 `second-brain-journal` 执行默认 search + embeddings closure。
+- journal 的 Basic Memory closure attempt 完成后，必须调用 `second-brain-hf-backup` 执行 `git add -A`、`git commit`、`git lfs push hf HEAD`、`git push hf HEAD:main`。若 Basic Memory 有 residual-risk，仍执行 HF backup handoff，并在最终回复中分别报告 Basic Memory 状态与 Git backup 状态。
+- 若用户在 ingest 后明确暂缓日记，ingest 仍必须对已经写入的 wiki/raw/index 变化执行 interim search-only closure，并在最终回复中同时说明 `Journal pending`、Basic Memory file-sync clean/residual-risk 状态，以及 full embeddings checkpoint 与 HF backup deferred until journal；之后补写日记时由 `second-brain-journal` 执行默认 search + embeddings closure，并继续 handoff 给 `second-brain-hf-backup`。
 - `second-brain-query` 是 vault 文件只读，但允许执行一次 `basic-memory reindex --project second-brain --search` 修复本地索引后继续使用 Basic Memory；这不算写 vault。report-only lint 同样可执行入口 freshness gate。纯 `.obsidian/**` 图谱配置修复不触发 Basic Memory reindex，除非 status 已显示相关 Markdown 变化。
 - `second-brain-lint` fix pass、router/skill 维护、文件名移动、Obsidian/file-system move 等任何会改变 vault 内 Markdown 的流程，结束前必须运行 status/reindex/status，或报告 residual-risk，不能声称 clean。
 
@@ -66,6 +68,11 @@ Agent 约束：
 - 每次 `write_note` 后必须验证实际文件名。
 - wiki 内容页文件名必须是 lowercase English kebab-case。
 - 域索引文件名必须是 `wiki/{domain}/_index.md`。
+- 新建或修复 wiki 内容页必须包含 `permalink: second-brain/wiki/{domain}/{slug}`，其中 `{slug}` 是不带 `.md` 的文件名。
+- 新建或修复域索引必须包含 `permalink: second-brain/wiki/{domain}/index`。
+- 新建或修复日记必须包含 `permalink: second-brain/daily/YYYY-MM-DD`。
+- root `index.md` 使用 `permalink: second-brain/index`；router 文件使用各自专属 permalink：`second-brain/claude`、`second-brain/agents`、`second-brain/gemini`。
+- 每次 Markdown 写入后必须验证文件真实存在、大小非零、frontmatter 可读，且 `permalink` 与路径公式一致。
 - 不符合命名规则时立即用 `move_note` 修正。
 
 ## 目录结构
@@ -77,16 +84,24 @@ second-brain/
 ├── GEMINI.md                 # Gemini CLI router
 ├── index.md                  # 总目录，指向各域 _index.md
 ├── daily/                    # 日记，YYYY-MM-DD.md
+├── templates/                 # Obsidian 模板，如 daily.md
 ├── wiki/                     # 结构化知识库
 │   └── {domain}/
 │       ├── _index.md         # 域内目录
 │       └── *.md              # wiki 内容页
 ├── raw/                      # 用户主动放入的 immutable 原始素材
+├── .claudian/                # Claudian 宿主 UI 状态；非知识库内容
+├── .workflows/               # heavy workflow 产物；本地 agent 状态，非知识库内容
+├── .brv/                     # ByteRover 本地状态；非知识库内容
 ├── .obsidian/                # Obsidian 配置
-└── .claude/
-    ├── settings.json         # hooks
-    ├── scripts/              # PowerShell 硬防线
-    └── skills/               # vault 本地 skills
+├── .claude/
+│   ├── settings.json         # Claude hooks
+│   ├── scripts/              # PowerShell 硬防线
+│   └── skills/               # Claude 本地 skills
+├── .agents/
+│   └── skills/               # Codex / cross-agent 本地 skills
+└── .gemini/
+    └── skills/               # Gemini 本地 skills
 ```
 
 ## Router Sync
@@ -100,26 +115,32 @@ second-brain/
 
 ## Skill Stack
 
-本 vault 的运行逻辑由 7 个 skill 组成：
+本 vault 的业务运行逻辑由 8 个本地 second-brain skill 组成；另有 1 个全局 `obsidian-markdown` 作为语法底座：
 
 | 层 | Skill | 用途 |
 |---|---|---|
 | 语法底座 | `obsidian-markdown` | 创建/编辑 Obsidian Flavored Markdown；写 `wiki/**/*.md` 前必须加载 |
 | 业务动作 | `second-brain-ingest` | 将文本、URL、raw 文件、讨论上下文整理进 wiki |
+| 业务动作 | `second-brain-delete` | 通过 plan/apply/validate manifest 安全删除显式 wiki note、domain、raw、daily 或旧 workflow 产物 |
 | 业务动作 | `second-brain-query` | 只读查询 vault 已有知识 |
 | 业务动作 | `second-brain-lint` | 健康检查、死链、frontmatter、索引、语义互链审计 |
-| 业务动作 | `second-brain-journal` | 写入/追加 `daily/YYYY-MM-DD.md`，覆盖 ingest manifest，并统一执行 Basic Memory adaptive reindex closure |
-| 业务动作 | `second-brain-graph-manager` | 维护 `.obsidian/graph.json` 的 5 条 colorGroups 与附件节点颜色 |
+| 业务动作 | `second-brain-journal` | 写入/追加 `daily/YYYY-MM-DD.md`，覆盖 ingest/delete manifest，并统一执行 Basic Memory adaptive reindex closure 与 HF backup handoff |
+| 支撑动作 | `second-brain-hf-backup` | 在 journal closure 后执行全量 `git add -A`、本地 commit、推送到 Hugging Face private dataset remote |
+| 业务动作 | `second-brain-graph-manager` | 维护 `.obsidian/graph.json` 的 6 条 colorGroups（含 templates）与附件节点颜色 |
 | 维护动作 | `second-brain-vault-audit` | 仓库级外部健康度检查：router、skills、hooks、MCP、Obsidian、Basic Memory、scaffold 闭环 |
 
 调用规则：
 
 - 任何写入 `wiki/**/*.md` 的动作必须先加载 `obsidian-markdown`。
 - `obsidian-markdown` 只提供 Obsidian 语法底座；当它与本 vault 的 schema / hooks 更严格规则冲突时，以本 vault 为准：内部 note 链接必须用 wikilink，frontmatter 数组必须用多行 YAML。
-- `second-brain-ingest` 写 wiki 前必须先完成 domain-routing preflight（读取 root `index.md`、所有 domain `_index.md`、检索候选页面、输出 manifest 并等用户确认）；写 wiki 时同时使用 `obsidian-markdown`，并按需引用 `second-brain-lint` 的互链审计规则。
+- `second-brain-ingest` 写 wiki 前必须先完成 semantic fidelity pass 与 domain-routing preflight（读取 root `index.md`、所有 domain `_index.md`、检索候选页面、输出含 semantic coverage plan 的 manifest 并等用户确认）；写 wiki 时同时使用 `obsidian-markdown`，并按需引用 `second-brain-lint` 的互链审计规则。
+- `second-brain-ingest` 必须执行 semantic fidelity pass：允许精炼、去重和重组，但必须保留关键语义、逻辑链、前提、限制、反例、决策依据、自我修正和未决问题。写前输出 semantic coverage plan，写后执行 coverage audit；P0 高风险压缩、舍弃、合并或不确定自我修正必须确认或报告 residual-risk。
+- `second-brain-delete` 必须先生成 delete manifest，再凭 manifest confirmation token 执行 destructive apply，随后运行 validation report、Basic Memory closure、daily journal 与 HF backup closure。真实知识删除必须有 pre-delete backup gate，且工作区除显式 scoped 的 `.workflows/**` 产物外必须干净；基础设施路径、当前 workflow、wildcard、path escape 默认拒绝。
 - `second-brain-lint` 默认只报告；进入 fix pass 写 wiki 时必须加载 `obsidian-markdown`。
 - `second-brain-query` 只读，默认不加载 `obsidian-markdown`，也不写 vault。
-- `second-brain-journal` 写 `daily/`，日记不使用任何内部链接；提到 wiki 页面时用普通文本 slug 或 `wiki/{domain}/{slug}.md` 路径；只允许 `http(s)` 外部链接。写完日记后统一判断并执行 Basic Memory adaptive reindex closure。
+- `second-brain-journal` 写 `daily/`，日记不使用任何内部链接；提到 wiki 页面或 delete manifest 路径时用普通文本 slug 或 `wiki/{domain}/{slug}.md` 路径；只允许 `http(s)` 外部链接。写完日记后统一判断并执行 Basic Memory adaptive reindex closure，然后调用 `second-brain-hf-backup` 做 Hugging Face full Git snapshot push closure。
+- `second-brain-hf-backup` 是 journal 的最终远端备份闭环，也可被用户直接触发；它执行 `git add -A`、`git commit`、`git lfs push hf HEAD`、`git push hf HEAD:main`，遵循 Git 自身 `.gitignore` 规则，不绕过 ignore。
+- 私有 Hugging Face backup 目标是 full vault snapshot；本地 pre-push 保护若存在，必须只对 remote 名称为 `hf` 且 URL 精确匹配 `<hf-private-dataset-url>` 的推送放行受保护 agent/vault 文件，其他 remote 继续阻断。
 - `second-brain-graph-manager` 写 JSON，不需要 `obsidian-markdown`。
 - `second-brain-vault-audit` 是仓库级外部健康检查入口；当用户要求“仓库健康度外部检查”、完整 vault audit、Claude/Codex/Gemini router 维护、hooks/MCP/Obsidian/Basic Memory 闭环验证时加载。
 
@@ -129,8 +150,8 @@ second-brain/
 
 适用范围：
 
-- 四个主要业务动作：`second-brain-ingest`、`second-brain-query`、`second-brain-lint`、`second-brain-journal`。
-- 支撑动作：`second-brain-graph-manager`。当它被用户直接触发，或被 ingest / lint 间接触发时，也必须完整执行自己的 workflow。
+- 五个主要业务动作：`second-brain-ingest`、`second-brain-delete`、`second-brain-query`、`second-brain-lint`、`second-brain-journal`。
+- 支撑动作：`second-brain-graph-manager`、`second-brain-hf-backup`。当它们被用户直接触发，或被 journal / ingest / lint 间接触发时，也必须完整执行自己的 workflow。
 - 维护动作：`second-brain-vault-audit`。当用户要求仓库级外部健康检查或 router/skill/hook/MCP 维护时，必须完整执行自己的 audit workflow。
 
 执行规则：
@@ -139,7 +160,7 @@ second-brain/
 - 只允许在以下情况暂停：skill 明确要求等待用户确认；源材料、工具或权限真实不可用；继续执行会改变语义内容且需要用户确认。
 - 暂停后用户确认或补充资料时，从已暂停的下一步继续执行，不重新解释流程、不跳过剩余步骤。
 - 最终回复前必须对照该 skill 的 completion / closure 条件；缺任一条件时报告 blocked / deferred / residual-risk，不得声称完成或 clean。
-- `second-brain-ingest` 的 preflight manifest 和 journal yes/no 是确认门，不是提前结束点；确认后必须继续执行写入、manifest、journal closure 或 deferred 标记。若本次 ingest 写入日记，Basic Memory adaptive reindex closure 由 `second-brain-journal` 在日记写完后统一执行；若 journal deferred 但已经写入 wiki/raw/index，`second-brain-ingest` 必须先对这些 Markdown 变化执行 Basic Memory status/reindex/status 收口，之后补写日记时再由 `second-brain-journal` 对 daily 文件执行收口。
+- `second-brain-ingest` 的 preflight manifest 和 journal yes/no 是确认门，不是提前结束点；确认后必须继续执行写入、manifest、journal closure 或 deferred 标记。若本次 ingest 写入日记，Basic Memory adaptive reindex closure 由 `second-brain-journal` 在日记写完后统一执行，随后必须调用 `second-brain-hf-backup` 做远端 Git 快照；若 journal deferred 但已经写入 wiki/raw/index，`second-brain-ingest` 必须先对这些 Markdown 变化执行 Basic Memory status/reindex/status 收口，之后补写日记时再由 `second-brain-journal` 对 daily 文件执行完整收口与 HF backup handoff。
 - `second-brain-lint` 不能只跑确定性脚本就声称全面审计完成；full audit 必须覆盖 skill 里列出的全部检查和必要的人工语义检查。
 
 ### Claude Code 交互提问规则
@@ -156,10 +177,12 @@ second-brain/
 | 触发意图 | 本地 skill |
 |---|---|
 | “把这些东西都整理进我的第二大脑里面” / ingest / 沉淀到第二大脑 | `second-brain-ingest` |
+| “从第二大脑删除...” / delete / remove / 删除 wiki 笔记、raw 附件、domain、显式 daily 或旧 workflow 产物 | `second-brain-delete` |
 | “检查下我的第二大脑，看看之前学过这些相关的内容吗” / 查旧知识 | `second-brain-query` |
 | “审计一下第二大脑的知识库，做一下健康检查” / lint / 检查双链 | `second-brain-lint` |
 | “仓库健康度外部检查” / 外部 vault audit / Claude/Codex/Gemini 维护 router、skills、hooks、MCP | `second-brain-vault-audit` |
 | “写一下第二大脑日记” / 日记 | `second-brain-journal` |
+| “推送到 Hugging Face” / “备份第二大脑” / “HF backup” / journal closure 后自动远端备份 | `second-brain-hf-backup` |
 | “重刷图谱颜色” / 图谱色组 / 新建域后验证 | `second-brain-graph-manager` |
 
 不再运行时引用外部 wiki-ingest / wiki-query / wiki-lint。它们只作为本地 second-brain skill 的上游设计来源。
@@ -211,6 +234,7 @@ PowerShell 脚本读写中文时必须显式使用 UTF-8。
 - Markdown 图片显示由 `.obsidian/snippets/second-brain-markdown-images.css` 全局控制：wiki 内容页中的 Obsidian image embed 和独立 Markdown 图片默认横向居中。Agent 不得为了居中在正文里包 HTML / `<style>` / inline CSS；raw 图片 embed 正文保持 canonical `![[raw/file.png|360]]` 或 `![[raw/file.png|600]]`，普通 Markdown 图片语法不承载本地 raw provenance。
 - `raw/` 不存 `.md`；Markdown 原文必须改存为 `.txt`、`.pdf`、原始附件格式，或直接 ingest 进 `wiki/`，避免 raw Markdown 的内部链接进入图谱。
 - `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` 是 agent 配置文件，不参与知识图谱互链；Obsidian Graph 中三者使用同一个 agent config 颜色组。
+- `.claude/`、`.agents/`、`.gemini/`、`.claudian/`、`.workflows/`、`.brv/` 是本地宿主 / workflow / ByteRover 状态目录，允许存在但不属于 Second Brain 知识层；Basic Memory、query/ingest/lint 候选发现和图谱语义审计必须忽略 `.claude/**`、`.agents/**`、`.gemini/**`、`.claudian/**`、`.workflows/**`、`.brv/**`。Agent 不在其中创建知识内容。
 
 详细页面 schema 见 `.claude/skills/second-brain-ingest/references/page-schema.md`。
 

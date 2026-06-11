@@ -1,0 +1,4 @@
+interface:
+  display_name: "Second Brain Vault Audit"
+  short_description: "Run the full external Second Brain vault health check."
+  default_prompt: "Audit this Second Brain vault end to end and report clean or residual risk."

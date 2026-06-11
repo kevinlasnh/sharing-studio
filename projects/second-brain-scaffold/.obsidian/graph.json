@@ -22,6 +22,13 @@
       }
     },
     {
+      "query": "path:\"templates/\"",
+      "color": {
+        "a": 1,
+        "rgb": 9141448
+      }
+    },
+    {
       "query": "file:_index",
       "color": {
         "a": 1,
@@ -49,10 +56,10 @@
   "nodeSizeMultiplier": 0.6359375,
   "lineSizeMultiplier": 1.19739583333333,
   "collapse-forces": false,
-  "centerStrength": 0.697916666666667,
-  "repelStrength": 17.5,
+  "centerStrength": 0.416666666666667,
+  "repelStrength": 16.1458333333333,
   "linkStrength": 1,
   "linkDistance": 30,
-  "scale": 0.19341094789039304,
+  "scale": 0.05932617187499932,
   "close": true
 }

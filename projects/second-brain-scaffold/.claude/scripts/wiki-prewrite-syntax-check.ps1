@@ -34,8 +34,106 @@ function Test-WikiMarkdownPath {
         return $false
     }
 
-    $normalized = $PathText -replace "\\", "/"
-    return $normalized -match '(^|/)wiki/.+\.md$'
+    $vaultPath = Get-VaultRelativePath -PathText $PathText
+    return $vaultPath -match '^wiki/.+\.md$'
+}
+
+function Get-VaultRelativePath {
+    param([string]$PathText)
+
+    if ([string]::IsNullOrWhiteSpace($PathText)) {
+        return ""
+    }
+
+    $projectDir = $env:CLAUDE_PROJECT_DIR
+    if ([string]::IsNullOrWhiteSpace($projectDir)) {
+        $projectDir = (Get-Location).Path
+    }
+
+    try {
+        $root = [System.IO.Path]::GetFullPath($projectDir).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+        $candidate = $PathText.Trim()
+        if (-not [System.IO.Path]::IsPathRooted($candidate)) {
+            $candidate = Join-Path -Path $root -ChildPath $candidate
+        }
+        $full = [System.IO.Path]::GetFullPath($candidate).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    } catch {
+        return ""
+    }
+
+    $rootNorm = ($root -replace "\\", "/").TrimEnd("/")
+    $fullNorm = ($full -replace "\\", "/").TrimEnd("/")
+    $rootWithSlash = $rootNorm + "/"
+    if ($fullNorm.Equals($rootNorm, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ""
+    }
+    if (-not $fullNorm.StartsWith($rootWithSlash, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ""
+    }
+
+    return $fullNorm.Substring($rootWithSlash.Length)
+}
+
+function Get-ExpectedPermalink {
+    param([string]$PathText)
+
+    $vaultPath = Get-VaultRelativePath -PathText $PathText
+    $vaultPath = $vaultPath -replace "\\", "/"
+    if ($vaultPath -match '^wiki/([^/]+)/_index\.md$') {
+        return "second-brain/wiki/$($Matches[1])/index"
+    }
+    if ($vaultPath -match '^wiki/([^/]+)/([^/]+)\.md$') {
+        return "second-brain/wiki/$($Matches[1])/$($Matches[2])"
+    }
+    return $null
+}
+
+function Test-WikiPathSchema {
+    param([string]$VaultPath)
+
+    $violations = New-Object System.Collections.Generic.List[string]
+    $domainPattern = '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+    $slugPattern = '^[a-z0-9]+(?:-[a-z0-9]+)*$'
+
+    if ($VaultPath -match '^wiki/([^/]+)/_index\.md$') {
+        $domain = $Matches[1]
+        if ($domain -cnotmatch $domainPattern) {
+            $violations.Add("wiki domain directory must be lowercase English kebab-case: $domain")
+        }
+    } elseif ($VaultPath -match '^wiki/([^/]+)/([^/]+)\.md$') {
+        $domain = $Matches[1]
+        $slug = $Matches[2]
+        if ($domain -cnotmatch $domainPattern) {
+            $violations.Add("wiki domain directory must be lowercase English kebab-case: $domain")
+        }
+        if ($slug -cnotmatch $slugPattern) {
+            $violations.Add("wiki content filename must be lowercase English kebab-case: $slug.md")
+        }
+    } else {
+        $violations.Add("wiki markdown path must be wiki/{domain}/_index.md or wiki/{domain}/{slug}.md")
+    }
+
+    return $violations
+}
+
+function Get-FrontmatterScalar {
+    param(
+        [string[]]$Lines,
+        [string]$Key
+    )
+
+    if ($Lines.Count -eq 0 -or $Lines[0].Trim() -ne "---") {
+        return $null
+    }
+    for ($i = 1; $i -lt $Lines.Count; $i++) {
+        if ($Lines[$i].Trim() -eq "---") {
+            return $null
+        }
+        if ($Lines[$i] -match "^$([regex]::Escape($Key)):\s*(.*)$") {
+            return $Matches[1].Trim().Trim("'`"")
+        }
+    }
+    return $null
 }
 
 function Get-NonFenceLines {
@@ -102,7 +200,8 @@ function Get-ProposedSnippets {
 function Test-ProposedMarkdown {
     param(
         [string]$Text,
-        [string]$Kind
+        [string]$Kind,
+        [string]$PathText
     )
 
     $violations = New-Object System.Collections.Generic.List[string]
@@ -182,6 +281,31 @@ function Test-ProposedMarkdown {
                 $violations.Add("YAML frontmatter must have a closing --- delimiter")
             }
         }
+
+        foreach ($requiredKey in @("title", "type", "permalink")) {
+            $value = Get-FrontmatterScalar -Lines $lines -Key $requiredKey
+            if ([string]::IsNullOrWhiteSpace($value)) {
+                $violations.Add("frontmatter must include '$requiredKey'")
+            }
+        }
+
+        $vaultPath = Get-VaultRelativePath -PathText $PathText
+        $actualType = Get-FrontmatterScalar -Lines $lines -Key "type"
+        if ($vaultPath -match '^wiki/[^/]+/_index\.md$' -and $actualType -ne "index") {
+            $violations.Add("domain index frontmatter type must be 'index'")
+        } elseif ($vaultPath -match '^wiki/[^/]+/[^/]+\.md$' -and $vaultPath -notmatch '/_index\.md$' -and $actualType -eq "index") {
+            $violations.Add("wiki content page frontmatter type must not be 'index'")
+        }
+
+        $expectedPermalink = Get-ExpectedPermalink -PathText $PathText
+        if (-not [string]::IsNullOrWhiteSpace($expectedPermalink)) {
+            $actualPermalink = Get-FrontmatterScalar -Lines $lines -Key "permalink"
+            if ([string]::IsNullOrWhiteSpace($actualPermalink)) {
+                $violations.Add("frontmatter must include deterministic permalink: $expectedPermalink")
+            } elseif ($actualPermalink -ne $expectedPermalink) {
+                $violations.Add("frontmatter permalink must match path: expected '$expectedPermalink', got '$actualPermalink'")
+            }
+        }
     }
 
     return $violations
@@ -198,8 +322,12 @@ if ($snippets.Count -eq 0) {
 }
 
 $allViolations = New-Object System.Collections.Generic.List[string]
+$vaultPath = Get-VaultRelativePath -PathText $filePath
+foreach ($violation in (Test-WikiPathSchema -VaultPath $vaultPath)) {
+    $allViolations.Add("path: $violation")
+}
 foreach ($snippet in $snippets) {
-    $violations = Test-ProposedMarkdown -Text $snippet.Text -Kind $snippet.Kind
+    $violations = Test-ProposedMarkdown -Text $snippet.Text -Kind $snippet.Kind -PathText $filePath
     foreach ($violation in $violations) {
         $allViolations.Add("$($snippet.Kind): $violation")
     }

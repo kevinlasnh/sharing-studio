@@ -34,16 +34,33 @@ function Normalize-VaultPath {
         return ""
     }
 
-    $normalized = ($PathText -replace "\\", "/").Trim()
     $projectDir = $env:CLAUDE_PROJECT_DIR
-    if (-not [string]::IsNullOrWhiteSpace($projectDir)) {
-        $projectNorm = ($projectDir -replace "\\", "/").TrimEnd("/")
-        if ($normalized.StartsWith($projectNorm, [System.StringComparison]::OrdinalIgnoreCase)) {
-            $normalized = $normalized.Substring($projectNorm.Length).TrimStart("/")
-        }
+    if ([string]::IsNullOrWhiteSpace($projectDir)) {
+        $projectDir = (Get-Location).Path
     }
 
-    return $normalized.ToLowerInvariant()
+    try {
+        $root = [System.IO.Path]::GetFullPath($projectDir).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+        $candidate = $PathText.Trim()
+        if (-not [System.IO.Path]::IsPathRooted($candidate)) {
+            $candidate = Join-Path -Path $root -ChildPath $candidate
+        }
+        $full = [System.IO.Path]::GetFullPath($candidate).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    } catch {
+        return ""
+    }
+
+    $rootNorm = ($root -replace "\\", "/").TrimEnd("/")
+    $fullNorm = ($full -replace "\\", "/").TrimEnd("/")
+    $rootWithSlash = $rootNorm + "/"
+    if ($fullNorm.Equals($rootNorm, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ""
+    }
+    if (-not $fullNorm.StartsWith($rootWithSlash, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ""
+    }
+
+    return $fullNorm.Substring($rootWithSlash.Length).ToLowerInvariant()
 }
 
 function Resolve-HookFilePath {
@@ -51,10 +68,6 @@ function Resolve-HookFilePath {
         [string]$PathText,
         $Hook
     )
-
-    if ([System.IO.Path]::IsPathRooted($PathText)) {
-        return $PathText
-    }
 
     $basePath = $env:CLAUDE_PROJECT_DIR
     if ([string]::IsNullOrWhiteSpace($basePath) -and $null -ne $Hook.cwd) {
@@ -64,7 +77,11 @@ function Resolve-HookFilePath {
         $basePath = (Get-Location).Path
     }
 
-    return (Join-Path -Path $basePath -ChildPath $PathText)
+    if ([System.IO.Path]::IsPathRooted($PathText)) {
+        return [System.IO.Path]::GetFullPath($PathText)
+    }
+
+    return [System.IO.Path]::GetFullPath((Join-Path -Path $basePath -ChildPath $PathText))
 }
 
 function Get-PageKind {

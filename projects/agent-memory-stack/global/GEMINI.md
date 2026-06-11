@@ -1,4 +1,5 @@
 # Gemini CLI Global Configuration
+
 ## User Identity
 
 - **User**: <your-username>（所有平台通用用户名）

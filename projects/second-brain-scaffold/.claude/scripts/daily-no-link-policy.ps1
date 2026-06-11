@@ -34,16 +34,33 @@ function Normalize-VaultPath {
         return ""
     }
 
-    $normalized = ($PathText -replace "\\", "/").Trim()
     $projectDir = $env:CLAUDE_PROJECT_DIR
-    if (-not [string]::IsNullOrWhiteSpace($projectDir)) {
-        $projectNorm = ($projectDir -replace "\\", "/").TrimEnd("/")
-        if ($normalized.StartsWith($projectNorm, [System.StringComparison]::OrdinalIgnoreCase)) {
-            $normalized = $normalized.Substring($projectNorm.Length).TrimStart("/")
-        }
+    if ([string]::IsNullOrWhiteSpace($projectDir)) {
+        $projectDir = (Get-Location).Path
     }
 
-    return $normalized.ToLowerInvariant()
+    try {
+        $root = [System.IO.Path]::GetFullPath($projectDir).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+        $candidate = $PathText.Trim()
+        if (-not [System.IO.Path]::IsPathRooted($candidate)) {
+            $candidate = Join-Path -Path $root -ChildPath $candidate
+        }
+        $full = [System.IO.Path]::GetFullPath($candidate).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    } catch {
+        return ""
+    }
+
+    $rootNorm = ($root -replace "\\", "/").TrimEnd("/")
+    $fullNorm = ($full -replace "\\", "/").TrimEnd("/")
+    $rootWithSlash = $rootNorm + "/"
+    if ($fullNorm.Equals($rootNorm, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ""
+    }
+    if (-not $fullNorm.StartsWith($rootWithSlash, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ""
+    }
+
+    return $fullNorm.Substring($rootWithSlash.Length).ToLowerInvariant()
 }
 
 function Resolve-HookFilePath {
@@ -51,10 +68,6 @@ function Resolve-HookFilePath {
         [string]$PathText,
         $Hook
     )
-
-    if ([System.IO.Path]::IsPathRooted($PathText)) {
-        return $PathText
-    }
 
     $basePath = $env:CLAUDE_PROJECT_DIR
     if ([string]::IsNullOrWhiteSpace($basePath) -and $null -ne $Hook.cwd) {
@@ -64,7 +77,31 @@ function Resolve-HookFilePath {
         $basePath = (Get-Location).Path
     }
 
-    return (Join-Path -Path $basePath -ChildPath $PathText)
+    if ([System.IO.Path]::IsPathRooted($PathText)) {
+        return [System.IO.Path]::GetFullPath($PathText)
+    }
+
+    return [System.IO.Path]::GetFullPath((Join-Path -Path $basePath -ChildPath $PathText))
+}
+
+function Get-FrontmatterScalar {
+    param(
+        [string[]]$Lines,
+        [string]$Key
+    )
+
+    if ($Lines.Count -eq 0 -or $Lines[0].Trim() -ne "---") {
+        return $null
+    }
+    for ($i = 1; $i -lt $Lines.Count; $i++) {
+        if ($Lines[$i].Trim() -eq "---") {
+            return $null
+        }
+        if ($Lines[$i] -match "^$([regex]::Escape($Key)):\s*(.*)$") {
+            return $Matches[1].Trim().Trim("'`"")
+        }
+    }
+    return $null
 }
 
 function Remove-InlineCode {
@@ -101,7 +138,11 @@ function Get-VisibleLines {
 }
 
 function Test-DailyText {
-    param([string]$Text)
+    param(
+        [string]$Text,
+        [string]$Kind,
+        [string]$VaultPath
+    )
 
     $violations = New-Object System.Collections.Generic.List[string]
     if ([string]::IsNullOrWhiteSpace($Text)) {
@@ -118,6 +159,20 @@ function Test-DailyText {
             $violations.Add(("{0}: {1}" -f $line.Number, $line.Text.Trim()))
         } elseif ($localMarkdownPattern.IsMatch($line.Text)) {
             $violations.Add(("{0}: {1}" -f $line.Number, $line.Text.Trim()))
+        }
+    }
+
+    if ($Kind -eq "full-file") {
+        if ($VaultPath -notmatch '^daily/(\d{4}-\d{2}-\d{2})\.md$') {
+            $violations.Add("daily note path must be daily/YYYY-MM-DD.md")
+        } else {
+            $expectedPermalink = "second-brain/daily/$($Matches[1])"
+            $actualPermalink = Get-FrontmatterScalar -Lines $lines -Key "permalink"
+            if ([string]::IsNullOrWhiteSpace($actualPermalink)) {
+                $violations.Add("frontmatter must include deterministic permalink: $expectedPermalink")
+            } elseif ($actualPermalink -ne $expectedPermalink) {
+                $violations.Add("frontmatter permalink must match path: expected '$expectedPermalink', got '$actualPermalink'")
+            }
         }
     }
 
@@ -167,10 +222,13 @@ if ($vaultPath -notmatch '^daily/[^/]+\.md$') {
 }
 
 $allViolations = New-Object System.Collections.Generic.List[string]
+if ($vaultPath -notmatch '^daily/\d{4}-\d{2}-\d{2}\.md$') {
+    $allViolations.Add("path: daily notes must use daily/YYYY-MM-DD.md")
+}
 $snippets = Get-ProposedSnippets -Hook $hook
 
 foreach ($snippet in $snippets) {
-    $violations = Test-DailyText -Text $snippet.Text
+    $violations = Test-DailyText -Text $snippet.Text -Kind $snippet.Kind -VaultPath $vaultPath
     foreach ($violation in $violations) {
         $allViolations.Add("$($snippet.Kind): $violation")
     }
@@ -181,7 +239,7 @@ $resolvedPath = Resolve-HookFilePath -PathText $filePath -Hook $hook
 if ($shouldScanCurrentFile -and (Test-Path -LiteralPath $resolvedPath -PathType Leaf)) {
     try {
         $content = Get-Content -LiteralPath $resolvedPath -Raw -Encoding UTF8 -ErrorAction Stop
-        $violations = Test-DailyText -Text $content
+        $violations = Test-DailyText -Text $content -Kind "full-file" -VaultPath $vaultPath
         foreach ($violation in $violations) {
             $allViolations.Add("file: $violation")
         }

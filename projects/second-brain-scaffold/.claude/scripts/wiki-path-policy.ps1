@@ -34,16 +34,33 @@ function Normalize-VaultPath {
         return ""
     }
 
-    $normalized = ($PathText -replace "\\", "/").Trim()
     $projectDir = $env:CLAUDE_PROJECT_DIR
-    if (-not [string]::IsNullOrWhiteSpace($projectDir)) {
-        $projectNorm = ($projectDir -replace "\\", "/").TrimEnd("/")
-        if ($normalized.StartsWith($projectNorm, [System.StringComparison]::OrdinalIgnoreCase)) {
-            $normalized = $normalized.Substring($projectNorm.Length).TrimStart("/")
-        }
+    if ([string]::IsNullOrWhiteSpace($projectDir)) {
+        $projectDir = (Get-Location).Path
     }
 
-    return $normalized.ToLowerInvariant()
+    try {
+        $root = [System.IO.Path]::GetFullPath($projectDir).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+        $candidate = $PathText.Trim()
+        if (-not [System.IO.Path]::IsPathRooted($candidate)) {
+            $candidate = Join-Path -Path $root -ChildPath $candidate
+        }
+        $full = [System.IO.Path]::GetFullPath($candidate).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    } catch {
+        return ""
+    }
+
+    $rootNorm = ($root -replace "\\", "/").TrimEnd("/")
+    $fullNorm = ($full -replace "\\", "/").TrimEnd("/")
+    $rootWithSlash = $rootNorm + "/"
+    if ($fullNorm.Equals($rootNorm, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ""
+    }
+    if (-not $fullNorm.StartsWith($rootWithSlash, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ""
+    }
+
+    return $fullNorm.Substring($rootWithSlash.Length).ToLowerInvariant()
 }
 
 function Deny-Path {
@@ -64,6 +81,11 @@ function Deny-Path {
 }
 
 $filePath = Get-HookFilePath -Hook $hook
+if ($filePath -match '(^|[\\/])\.\.([\\/]|$)') {
+    Deny-Path -PathText $filePath -Reason "path traversal segments are not allowed in vault write targets"
+    exit 0
+}
+
 $vaultPath = Normalize-VaultPath -PathText $filePath
 
 if ([string]::IsNullOrWhiteSpace($vaultPath)) {
@@ -95,7 +117,7 @@ if ($vaultPath -match '^wiki/sources/') {
     exit 0
 }
 
-if ($vaultPath -match '^wiki/meta/(dashboard|overview)\.(md|canvas)$') {
+if ($vaultPath -match '^wiki/meta/dashboard\.md$' -or $vaultPath -match '^wiki/meta/overview\.canvas$') {
     Deny-Path -PathText $filePath -Reason "lint reports are conversation output by default; dashboard/canvas artifacts are not part of this vault scaffold"
     exit 0
 }
