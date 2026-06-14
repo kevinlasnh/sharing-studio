@@ -1,10 +1,13 @@
-# Claude Code local state — never share
+# Agent local state and hidden directories
+/AGENTS.md
+/CLAUDE.md
 /.claude/
-.brv/
-.brv
-task_plan.md
-findings.md
-progress.md
+/.codex/
+/.agents/
+/.workflows/
+/.obsidian/
+/.brv/
+/.brv
 
 # Secrets
 .env
