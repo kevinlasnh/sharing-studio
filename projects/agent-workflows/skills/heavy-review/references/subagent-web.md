@@ -19,8 +19,9 @@ Read（仅限读取 heavy-review reference 文件）+ 当前宿主内置 WebSear
 
 **必须新增的反向词扫描**：对每个 plan 操作动词（如"删除 X"、"重启 Y"、"修改 Z 配置"），加上反向词搜索：
 ```
-<工具名/操作> deprecated / breaking change / data loss / known issue / CVE / regression
+工具名或操作 deprecated / breaking change / data loss / known issue / CVE / regression
 ```
+实际查询时必须把 `工具名或操作` 替换为 plan 中真实工具名、API 名、命令或操作动词，不得按字面搜索模板文字或尖括号占位。
 
 **引用溯源规则（审查独有）**：plan 中所有外部公开 URL / 第三方工具版本号 / 公开 API 名 / 公开 CLI flag 都视为"公开引用"，每个公开引用必须能通过当前宿主内置 web search 命中或 web fetch 直连公开官方/权威来源验证。在联网工具可用、且已实际尝试 web search / web fetch 后仍无法通过任一路径验证时，标记 `MISSING`（本身即 FAIL 发现项）。若联网工具不可用、被阻断或超出路线能力，标记 `UNVERIFIABLE`，不得伪装成 `MISSING`。
 
@@ -34,7 +35,7 @@ Read（仅限读取 heavy-review reference 文件）+ 当前宿主内置 WebSear
 
 1. **关键词查询**：直接提取 plan 中的工具名 / API 名 / 版本号
 2. **HyDE 变体**：写一段"假设性失败模式"或"假设性 changelog"作为检索输入
-   - 例：验证"PSScriptAnalyzer v1.21 支持 X"→ HyDE 文档写"PSScriptAnalyzer 1.21 release notes mentioning X"
+   - 例：验证"rsync 3.2.7 支持 X"→ HyDE 文档写"rsync 3.2.7 release notes mentioning X"
    - 注意：HyDE 必须与关键词 + 分解三路并行，不能单独使用（避免知识泄漏拉远召回）
 3. **分解变体**：拆"工具名 + 版本号 + 关键功能/限制"
 

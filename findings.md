@@ -165,6 +165,16 @@
 - 仓库源与全局 `/home/kevinlasnh/.agents/skills/heavy-research` / `heavy-review` 已同步，Claude Code 侧 symlink 自动复用。
 - 验证通过：仓库源与全局安装目录 `quick_validate.py` 共 4 项通过；自定义一致性检查、Python helper 内存编译、仓库/全局 `diff -qr`、`__pycache__` / `.pyc` 扫描、危险残留扫描和 `git diff --check` 均通过。
 
+## 2026-06-22 heavy workflows goal 自我迭代复查
+
+- 本轮使用 goal 持续迭代检查 `heavy-research` / `heavy-review`，每轮发现问题后立即修复并重跑验证；最后一轮未发现新增逻辑问题后收口。
+- 发现并修复最终产物模板占位漏洞：Research 报告、综合摘要、deployment-plan、Review 报告、综合审查报告和 inline fix 都必须拒绝尖括号占位符和省略号占位；未知内容要写成真实 `UNVERIFIABLE`、待确认、前置检查或风险项。
+- 发现并修复查询模板字面复制风险：`brv query "<关键概念>"` 改为非尖括号示例并要求替换为真实关键词；Review 联网反向词扫描同样要求替换为真实工具名/API/命令/操作动词。
+- 发现并修复 Ubuntu 版 Skill 中的 PowerShell 生态示例残留：`PSScriptAnalyzer` HyDE 示例已替换为 `rsync 3.2.7` 示例。
+- 补齐 synthesis reference 的输入校验闭环：即使主 Skill 已在 B3/R2.4 拦截，Research/Review 综合模板自身也会拒绝带模板占位的坏报告，不把坏报告继续综合。
+- 仓库源已同步到 `/home/kevinlasnh/.agents/skills/heavy-research` 和 `/home/kevinlasnh/.agents/skills/heavy-review`；Claude Code 侧 symlink 继续指向 `.agents` 真源。
+- 最后一轮验证通过：仓库源与全局安装目录 `quick_validate.py` 共 4 项通过；自定义 50+ 项一致性检查、helper 脚本临时目录 smoke test、helper 内存编译、仓库/全局 `diff -qr`、危险残留扫描、`__pycache__` / `.pyc` 扫描和 `git diff --check` 均通过。
+
 ---
 *每执行2次查看/浏览器/搜索操作后更新此文件*
 *防止视觉信息丢失*

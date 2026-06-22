@@ -51,6 +51,7 @@
 - [x] 让 heavy-research / heavy-review 派发 subagent 时继承 main agent thinking effort，并同步到全局 Skill
 - [x] 复查 heavy-research / heavy-review 逻辑边界，修复 heavy-review 源码路线只读语法检查冲突
 - [x] 再次最细复查 heavy-research / heavy-review 逻辑边界，修复 Review 只读 Git 状态、dry-run 写入风险和 Research/Review reference 一致性问题
+- [x] 使用 goal 自我迭代复查 heavy-research / heavy-review，修复模板占位、查询模板、Linux 示例和 synthesis 输入校验问题；最后一轮未发现新增逻辑问题，已同步全局并验证通过
 - [ ] 恢复 GTD Todoist skills
 - [ ] 检查 Todoist CLI/API 和 reminder-only cron
 - [ ] 运行 health check

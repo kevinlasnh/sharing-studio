@@ -12,7 +12,7 @@
 4. `_run.md` 的 `route_items` 必须同时列出 web 和 source；某路线无 item 时值必须为 `none`。web 和 source 不得同时为 `none`，否则说明 R2.1 清单生成失败。缺少路线行、两路线同时为空、保留模板占位、保留尖括号、保留说明文字或省略号时不得综合，因为 main agent 无法区分“空路线”“漏写路线”和“未替换模板”
 5. `_run.md` 中 web / source 的 `route_items` 分配必须与 `## Review Checklist` 中每个 item 的 `evidence_route` 字段精确一致：`evidence_route: 联网` 的 item 只能出现在 web；`evidence_route: 源码` 的 item 只能出现在 source；`evidence_route: 都需要` 的 item 必须同时出现在 web 和 source；不得漏掉 checklist item，也不得出现 checklist 中不存在的编号。若不满足，不得综合，必须修正 `_run.md` 或重建本轮审查
 6. 若 `_run.md` 中某路线的 `route_items` 为 `none`，对应结果文件必须是空路线占位报告；若该文件残留任何 `## 审查项 #` 非空报告内容，不得综合，必须覆盖为空路线占位报告或重建本轮审查
-7. 每份非空路线报告必须覆盖 `_run.md` 中 `route_items` 分配给该路线的所有审查项编号，并且每个被分配审查项都必须保留 `### 路线结论`、`### 发现`、`### 通过项`、`### 无法验证项` 四个小节，写出 `route_conclusion` 字段，字段值只能等于 `PASS`、`FAIL`、`UNVERIFIABLE` 三者之一；审查项标题风险提示必须来自 checklist 的 `risk_hint`，只能写 `HIGH-candidate` / `normal`；证据级别只能写 `confirmed` / `unverified` / `CONFLICT` / `STALE` / `MISSING`。缺失编号、缺少任一必需小节、保留模板说明行、缺失 `route_conclusion`、`route_conclusion` 保留枚举占位 / 同时写多个值、标题风险提示或证据级别缺失 / 非法 / 保留枚举占位、`route_conclusion` 与明细状态不符合 FAIL > UNVERIFIABLE > PASS 判定规则、或 `route_conclusion` 缺少对应明细支撑（PASS 无真实通过项、FAIL 无真实失败发现和建议修复、UNVERIFIABLE 无真实无法验证项和原因）时不得综合
+7. 每份非空路线报告必须覆盖 `_run.md` 中 `route_items` 分配给该路线的所有审查项编号，并且每个被分配审查项都必须保留 `### 路线结论`、`### 发现`、`### 通过项`、`### 无法验证项` 四个小节，写出 `route_conclusion` 字段，字段值只能等于 `PASS`、`FAIL`、`UNVERIFIABLE` 三者之一；审查项标题风险提示必须来自 checklist 的 `risk_hint`，只能写 `HIGH-candidate` / `normal`；证据级别只能写 `confirmed` / `unverified` / `CONFLICT` / `STALE` / `MISSING`。缺失编号、缺少任一必需小节、保留模板说明行、保留任何尖括号占位符或省略号占位、缺失 `route_conclusion`、`route_conclusion` 保留枚举占位 / 同时写多个值、标题风险提示或证据级别缺失 / 非法 / 保留枚举占位、`route_conclusion` 与明细状态不符合 FAIL > UNVERIFIABLE > PASS 判定规则、或 `route_conclusion` 缺少对应明细支撑（PASS 无真实通过项、FAIL 无真实失败发现和建议修复、UNVERIFIABLE 无真实无法验证项和原因）时不得综合
 8. 按每个审查项聚合 `route_conclusion`：任一相关取证路线为 `FAIL` → 进入严重度问题；无 FAIL 但任一相关取证路线为 `UNVERIFIABLE` → 进入无法验证项；只有所有相关取证路线均为 `PASS` → 才进入通过项总览。`route_items` 中该路线值为 `none` 的空路线不参与该审查项聚合
 9. 按审查项编号对齐：同一编号的 2 条取证路线发现放在一起，并保留风险提示 HIGH-candidate / normal
 10. 标注每条发现的来源取证路线
@@ -69,6 +69,8 @@
 ```
 
 上方 `HIGH-candidate`、`normal`、`[联网]`、`[源码]` 都只是示例值。每个审查项标题中的风险提示必须来自 `_run.md` checklist 的 `risk_hint`，只能写 `HIGH-candidate` 或 `normal`；每条发现的路线标签必须写实际来源路线，只能写 `[联网]`、`[源码]` 或 `[双路线]`，不得保留 `HIGH-candidate/normal` 或 `[联网/源码]` 这类斜杠枚举占位。
+
+综合审查报告不得保留任何尖括号占位符或省略号占位，例如 `<plan 主题>`、`<问题描述>`、`<具体修改>`、`<...>`、`...`。无法确认的内容必须进入“无法验证项”并说明处理要求，不得用模板占位代替。
 
 ---
 

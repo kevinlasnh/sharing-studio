@@ -425,3 +425,21 @@
   - `git diff --check`：pass。
 - 遇到的问题：
   - 一次 `rg` 命令字符串中包含反引号包裹的 `run_id`，shell 先尝试执行命令替换并输出 `run_id: command not found`；未影响文件，后续搜索改用单引号避免命令替换。
+
+### 阶段 4：heavy workflows goal 自我迭代逻辑复查
+- **状态：** complete
+- **更新时间：** 2026-06-22 18:53 +0800
+- 执行的操作：
+  - 使用 goal 继续反复细粒度审查 `heavy-research` 与 `heavy-review`，直到最后一轮找不到新增逻辑问题。
+  - 修复最终产物模板残留问题：在主 Skill、core reference、synthesis reference、deployment-plan 模板和 review fix 模式中补充“不得保留尖括号占位符或省略号占位”的规则。
+  - 修复查询模板字面复制风险：`heavy-research` 记忆路线的 `brv query` 示例改为真实关键词占位，并要求实际执行时替换；`heavy-review` 联网反向词扫描同样要求替换真实工具/API/命令/操作动词。
+  - 修复 Ubuntu 版示例残留：将 Review 联网 HyDE 示例从 `PSScriptAnalyzer` 改为 `rsync 3.2.7`。
+  - 补齐 Research / Review synthesis 输入校验，使综合阶段也会拒绝带模板占位的坏报告。
+  - 用 `rsync -a --delete` 将两个仓库源 Skill 同步到 `/home/kevinlasnh/.agents/skills/`；Claude Code 侧 symlink 保持指向 `.agents` 真源。
+- 验证：
+  - 仓库源 `heavy-research` / `heavy-review` 通过 `skill-creator/scripts/quick_validate.py`。
+  - 全局安装目录 `heavy-research` / `heavy-review` 通过 `skill-creator/scripts/quick_validate.py`。
+  - 自定义一致性检查覆盖触发词、exact-only guard、Linux 残留、thinking effort 继承、文件可见性 fallback、Done 信号、占位符拒绝、旧报告隔离、route_items、route_conclusion 和 inline fix hash guard，全部通过。
+  - 4 个 helper 脚本通过内存 `compile()`；临时目录 smoke test 覆盖 session 创建、latest session 查找、review 目录创建和 latest plan 查找。
+  - 仓库源与全局安装目录 `diff -qr` 无差异；全局 Claude Code symlink 指向 `.agents`；危险残留扫描和 `git diff --check` 均通过；无 `__pycache__` / `.pyc`。
+  - 最后一轮未发现新增逻辑问题。
