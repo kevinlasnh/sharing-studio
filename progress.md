@@ -306,3 +306,49 @@
   - 仓库根 `AGENTS.md` / `CLAUDE.md` 已被 `.gitignore` 忽略，不纳入本次提交。
   - 执行 Git `add` / `commit`，创建 commit `8859b2a`（`chore: track PWF memory files`）。
   - 首次 `git push origin master` 因 TLS 连接非正常终止失败；检查代理和 GitHub HTTPS 连通后重试成功，将 `master` 从 `d5c54bd` 推进到 `8859b2a`。
+
+## 会话：2026-06-22
+
+### 阶段 4：agent workflows Skill 存在性检查
+- **状态：** in_progress
+- **更新时间：** 2026-06-22 16:00 +0800
+- 执行的操作：
+  - 检查当前仓库 `projects/` 下的 Skill 结构。
+  - 确认 `projects/agent-workflows/skills/heavy-research/SKILL.md` 与 `projects/agent-workflows/skills/heavy-review/SKILL.md` 存在。
+  - 读取两个 Skill 的开头说明，确认触发词分别为“准备开始进行重型调研”和“准备开始进行重型审查”。
+  - 搜索 `medium` / “中型”，未发现 `medium-research` 或“中型调研”独立 Skill。
+  - 检查本机全局 `/home/kevinlasnh/.agents/skills/` 与 `/home/kevinlasnh/.claude/skills/`，未发现 `heavy-research` / `heavy-review` 已部署。
+  - 检查运行时，当前 Ubuntu 环境未发现 `pwsh` / `powershell`，而仓库内两个 Skill 的辅助脚本仍是 `.ps1`。
+- 后续：
+  - 部署前需要决定：迁移 `.ps1` 脚本为 `.sh` / `.py` 并更新 Skill 文档，或先安装 PowerShell 运行时。
+
+### 阶段 4：heavy-research / heavy-review 全局部署
+- **状态：** complete
+- **更新时间：** 2026-06-22 16:02 +0800
+- 执行的操作：
+  - 将仓库 `projects/agent-workflows/skills/heavy-research` 复制到 `/home/kevinlasnh/.agents/skills/heavy-research`。
+  - 将仓库 `projects/agent-workflows/skills/heavy-review` 复制到 `/home/kevinlasnh/.agents/skills/heavy-review`。
+  - 在 `/home/kevinlasnh/.claude/skills/` 下创建 `heavy-research` 和 `heavy-review` symlink，分别指向 `/home/kevinlasnh/.agents/skills/` 中的实体目录。
+  - 验证全局 `.agents` 目录中的两个 Skill 与仓库源目录 `diff -qr` 无差异。
+  - 更新 `task_plan.md`，将“恢复 heavy-research / heavy-review skills”标记完成。
+- 后续：
+  - 当前部署版本仍使用 `.ps1` 辅助脚本；Ubuntu 环境没有 `pwsh` / `powershell`，后续优化应迁移为 Linux 可执行脚本并同步更新全局 Skill 与仓库 scaffold。
+
+### 阶段 4：heavy workflows Ubuntu/Linux 迁移与校验
+- **状态：** complete
+- **更新时间：** 2026-06-22 16:35 +0800
+- 执行的操作：
+  - 全面扫描 `projects/agent-workflows/skills/heavy-research` 与 `heavy-review` 的 `.ps1` 脚本、`SKILL.md` 调用点、hash 示例和 review reference 中的 Windows/PowerShell 假设。
+  - 将 `heavy-research/scripts/new-session-dir.ps1` 迁移为 `new-session-dir.py`，将 `find-latest-session.ps1` 迁移为 `find-latest-session.py`。
+  - 将 `heavy-review/scripts/find-latest-plan.ps1` 迁移为 `find-latest-plan.py`，将 `ensure-review-dir.ps1` 迁移为 `ensure-review-dir.py`。
+  - 更新 heavy-research / heavy-review 主文档和 reference：脚本调用改为 `python3`，plan hash 示例改为 `sha256sum` / Python `hashlib`，源码审查路线改为 Ubuntu/Linux + bash/python3 取证语义。
+  - 用 `rsync -a --delete` 将仓库源目录同步到 `/home/kevinlasnh/.agents/skills/heavy-research` 与 `/home/kevinlasnh/.agents/skills/heavy-review`；Claude Code 侧继续通过 symlink 复用。
+- 验证：
+  - `python3 -m py_compile` 覆盖 4 个新 Python 脚本：pass。
+  - 临时目录 smoke test 覆盖 session 创建、session 恢复、deployment-plan 定位、review 目录创建：pass。
+  - 全局 `/home/kevinlasnh/.agents/skills/...` 路径 smoke test：pass。
+  - 仓库源目录与全局安装目录 `diff -qr`：无差异。
+  - PowerShell / `.ps1` / Windows 残留扫描：无输出。
+  - `skill-creator/scripts/quick_validate.py` 校验仓库源目录和全局安装目录的 `heavy-research` / `heavy-review`：4 项均 `Skill is valid!`。
+- 后续：
+  - 继续恢复 GTD Todoist skills、Todoist CLI/API 和 reminder-only cron。

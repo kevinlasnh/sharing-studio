@@ -32,9 +32,9 @@ description: Trigger this skill only when the user says exactly "准备开始进
 
 ### B0：创建本次调研目录
 
-如果这是本轮调研第一次进入阶段 B，在仓库根目录运行 `~/.agents/skills/heavy-research/scripts/new-session-dir.ps1` 创建新的 SESSION_DIR（格式：`.workflows/YYYY-MM-DD-HHmmss/`；同秒冲突时自动追加 `-1`、`-2` 后缀）。该脚本输出 `SESSION_DIR=<绝对路径>`，并同时写入 `.workflows/.active-session`，用于后续中断恢复。
+如果这是本轮调研第一次进入阶段 B，在仓库根目录运行 `python3 ~/.agents/skills/heavy-research/scripts/new-session-dir.py` 创建新的 SESSION_DIR（格式：`.workflows/YYYY-MM-DD-HHmmss/`；同秒冲突时自动追加 `-1`、`-2` 后缀）。该脚本输出 `SESSION_DIR=<绝对路径>`，并同时写入 `.workflows/.active-session`，用于后续中断恢复。
 
-如果这是 context compaction / 中断后的恢复场景，在仓库根目录运行 `~/.agents/skills/heavy-research/scripts/find-latest-session.ps1`：
+如果这是 context compaction / 中断后的恢复场景，在仓库根目录运行 `python3 ~/.agents/skills/heavy-research/scripts/find-latest-session.py`：
 - 若 `.workflows/.active-session` 指向的目录仍存在，优先恢复该 SESSION_DIR。
 - 若 active 指针不存在或失效，脚本回退到最近一个包含 `deployment-plan.md` 或 `research/` 的 session 目录。
 - 该脚本同样输出 `SESSION_DIR=<绝对路径>`；main agent 必须从该行解析出路径后继续。

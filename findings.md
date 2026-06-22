@@ -105,6 +105,30 @@
 - 本机全局 `AGENTS.md` / `CLAUDE.md` 完全一致，仓库根 `AGENTS.md` / `CLAUDE.md` 完全一致，sudo/locale/encoding 校验仍通过。
 - 2026-06-14 记录进度前复核：本次 Git 提交范围应包含 `.gitignore` 与 PWF 三件套；仓库根 `AGENTS.md` / `CLAUDE.md` 为本地 agent 配置且已被 `.gitignore` 忽略，不应进入提交。
 
+## 2026-06-22 agent workflows Skill 存在性检查
+
+- 当前仓库存在 `projects/agent-workflows/skills/heavy-research/SKILL.md` 和 `projects/agent-workflows/skills/heavy-review/SKILL.md`。
+- 仓库内没有找到 `medium-research` 或“中型调研”命名的独立 Skill；现有调研 Skill 是 `heavy-research`，触发词为“准备开始进行重型调研”。
+- 本机全局 `/home/kevinlasnh/.agents/skills/` 与 `/home/kevinlasnh/.claude/skills/` 下尚未部署 `heavy-research` / `heavy-review`。
+- 现有仓库版本的两个 Skill 辅助脚本均为 `.ps1`；当前 Ubuntu 环境未发现 `pwsh` 或 `powershell`，直接部署后脚本调用需要先迁移为 Linux 可执行入口或安装 PowerShell。
+
+## 2026-06-22 agent workflows Skill 全局部署
+
+- 已将 `projects/agent-workflows/skills/heavy-research` 复制到 `/home/kevinlasnh/.agents/skills/heavy-research`。
+- 已将 `projects/agent-workflows/skills/heavy-review` 复制到 `/home/kevinlasnh/.agents/skills/heavy-review`。
+- 已创建 Claude Code 全局 symlink：`/home/kevinlasnh/.claude/skills/heavy-research -> /home/kevinlasnh/.agents/skills/heavy-research`，`/home/kevinlasnh/.claude/skills/heavy-review -> /home/kevinlasnh/.agents/skills/heavy-review`。
+- 已验证全局 `.agents` 目录中的两份 Skill 与仓库 `projects/agent-workflows/skills/` 源目录当前内容一致。
+- 注意：部署内容仍包含 `.ps1` 辅助脚本；当前 Ubuntu 环境没有 PowerShell 运行时，后续优化应优先迁移这些脚本和 `SKILL.md` 中对应命令。
+
+## 2026-06-22 heavy workflows Ubuntu/Linux 迁移
+
+- 已将 `heavy-research` 的 `new-session-dir.ps1` / `find-latest-session.ps1` 替换为 Python 脚本：`new-session-dir.py` / `find-latest-session.py`。
+- 已将 `heavy-review` 的 `find-latest-plan.ps1` / `ensure-review-dir.ps1` 替换为 Python 脚本：`find-latest-plan.py` / `ensure-review-dir.py`。
+- 已更新 `SKILL.md` 和 reference 文档中的脚本调用为 `python3 ~/.agents/skills/.../*.py`，并将审查 hash 示例切到 `sha256sum` / Python `hashlib`。
+- 已将源码审查 reference 从 Windows + PowerShell 取证语义迁移到 Ubuntu/Linux + bash/python3：路径检查使用 `test` / `stat` / `find` / `git ls-files`，语法检查使用 `bash -n` / `python3 -m py_compile`，dry-run 只允许无状态变更模式。
+- 仓库源目录与全局 `/home/kevinlasnh/.agents/skills/heavy-research` / `heavy-review` 已同步；Claude Code 侧 symlink 继续指向 `.agents` 真源。
+- 验证通过：Python 编译、临时 `.workflows` smoke test、全局脚本 smoke test、PowerShell/`.ps1` 残留扫描、`skill-creator/scripts/quick_validate.py` 对仓库源目录和全局安装目录共 4 次校验。
+
 ---
 *每执行2次查看/浏览器/搜索操作后更新此文件*
 *防止视觉信息丢失*
