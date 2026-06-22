@@ -384,3 +384,20 @@
   - 仓库源目录与全局安装目录 `diff -qr`：无差异。
 - 备注：
   - 首次语法检查生成了临时 `__pycache__`，已清理并改用内存 `compile()` 复跑，避免验证产物污染仓库。
+
+### 阶段 4：heavy workflows 最细逻辑复查
+- **状态：** complete
+- **更新时间：** 2026-06-22 18:02 +0800
+- 执行的操作：
+  - 重新读取 `heavy-research` / `heavy-review` 的 `SKILL.md`、所有 reference 和 4 个 Python helper 脚本。
+  - 复查触发词、恢复规则、subagent prompt、文件可见性闭环、空路线占位、输出契约、模板占位禁止、只读边界和 Ubuntu/Linux 运行假设。
+  - 修复 `heavy-review` 源码路线的只读语法检查冲突：移除 `python3 -m py_compile` 示例，改为内存 `compile()`，避免生成 `__pycache__` / `.pyc`。
+  - 修复 inline Bash 片段语法检查边界：不再建议保存临时 scratch 文件，改为 stdin / here-doc 等无持久文件方式；无法无写入解析时标记 `UNVERIFIABLE`。
+  - 用 `rsync -a --delete` 将仓库 `heavy-review` 同步到 `/home/kevinlasnh/.agents/skills/heavy-review`；Claude Code 侧 symlink 自动复用。
+- 验证：
+  - `quick_validate.py` 校验仓库源目录和全局安装目录的 `heavy-research` / `heavy-review`：4 项均 `Skill is valid!`。
+  - 结构化一致性检查：触发词、exact-trigger 描述、subagent prompt 数量、thinking effort 覆盖、core reference 覆盖、Review 源码路线内存 compile 规则均通过。
+  - Linux/PowerShell 残留扫描 `powershell|pwsh|.ps1|Windows|C:\\|G:\\`：无输出。
+  - Python helper 脚本内存 `compile()` 语法检查：pass。
+  - 仓库源目录与全局安装目录 `diff -qr`：无差异。
+  - `git diff --check`：pass。

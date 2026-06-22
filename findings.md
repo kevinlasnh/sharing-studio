@@ -146,6 +146,15 @@
 - 已同步全局 `/home/kevinlasnh/.agents/skills/heavy-research` 与 `/home/kevinlasnh/.agents/skills/heavy-review`；Claude Code 侧 symlink 自动复用。
 - 验证通过：仓库源和全局目录 `diff -qr` 无差异；`quick_validate.py` 对仓库源目录和全局安装目录共 4 项通过；触发词、prompt effort 覆盖、core reference 覆盖、Linux 残留和 Python 脚本语法检查均通过。
 
+## 2026-06-22 heavy workflows 最细逻辑复查
+
+- 本轮重新全量读取 `heavy-research` / `heavy-review` 的 `SKILL.md`、所有 reference 和 4 个 Python helper 脚本，重点复查触发词、恢复规则、subagent prompt、文件可见性闭环、只读边界、输出契约、模板占位禁止和 Linux 运行假设。
+- 发现并修复一个 `heavy-review` 源码取证路线逻辑冲突：文档把 `python3 -m py_compile` 列入“只读 Shell / 不修改系统状态”的 syntax-check 范围，但该命令会生成 `__pycache__` / `.pyc`，与只读边界冲突。
+- 同一处还存在 inline Bash 片段“保存到临时 scratch 文件后运行 `bash -n`”的写入冲突；已改为 stdin / here-doc 等无持久文件方式，无法无写入解析时标记 `UNVERIFIABLE`。
+- 修复后 Review 源码路线统一要求 Python 使用内存 `compile()` 检查，并明确禁止生成 `__pycache__` / `.pyc`。
+- 已同步全局 `/home/kevinlasnh/.agents/skills/heavy-review`；`heavy-research` 本轮未发现需修改的逻辑问题。仓库源目录与全局安装目录 `diff -qr` 无差异，Claude Code 侧 symlink 自动复用。
+- 验证通过：`quick_validate.py` 对仓库源和全局安装目录的 `heavy-research` / `heavy-review` 共 4 项通过；结构化一致性检查、Linux/PowerShell 残留扫描、脚本内存语法检查、`git diff --check` 均通过。
+
 ---
 *每执行2次查看/浏览器/搜索操作后更新此文件*
 *防止视觉信息丢失*

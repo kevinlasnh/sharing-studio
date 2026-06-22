@@ -4,7 +4,7 @@
 
 ## 工具
 
-Grep + Read + Glob + 只读 Shell（`test -e` / `test -f` / `test -d` / `stat` / `find` / `git ls-files` / `git status --short` / `sha256sum` / `bash -n` / `python3 -m py_compile` / 其他不会修改系统状态的 dry-run 或 syntax-check 命令）+ Write（仅限输出契约指定的 review 报告文件）
+Grep + Read + Glob + 只读 Shell（`test -e` / `test -f` / `test -d` / `stat` / `find` / `git ls-files` / `git status --short` / `sha256sum` / `bash -n` / Python 内存语法检查 / 其他不会修改系统状态的 dry-run 或 syntax-check 命令）+ Write（仅限输出契约指定的 review 报告文件）
 
 ---
 
@@ -65,8 +65,8 @@ Grep + Read + Glob + 只读 Shell（`test -e` / `test -f` / `test -d` / `stat` /
 plan 内出现的代码块 / shell 命令必须按语言做语法检查。
 
 - Bash 脚本文件：`bash -n <script>`
-- inline Bash 片段：优先保存到临时 scratch 文件后运行 `bash -n <scratch>`；不得直接执行片段里的真实操作命令
-- Python 脚本文件：`python3 -m py_compile <script>`
+- inline Bash 片段：优先通过 stdin / here-doc 等无持久文件方式交给 `bash -n` 做语法检查；不得把片段保存到仓库或临时 scratch 文件，也不得直接执行片段里的真实操作命令。若宿主无法无写入地解析该片段，标记 UNVERIFIABLE
+- Python 脚本文件：使用内存 `compile()` 检查，例如 `python3 -B -c 'import sys, tokenize; p=sys.argv[1]; src=tokenize.open(p).read(); compile(src, p, "exec")' <script>`；不得使用会在源码目录生成 `__pycache__` / `.pyc` 的检查方式
 - JSON / YAML / TOML 等配置：优先使用仓库已有 lint/test 工具；没有工具时至少用对应解析器只读解析
 
 语法错误直接标记 FAIL，并把解析错误写入证据。无法确定语言或缺少解析器时标记 UNVERIFIABLE，不得当作 PASS。

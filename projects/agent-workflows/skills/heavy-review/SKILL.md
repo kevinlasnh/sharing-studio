@@ -205,7 +205,7 @@ plan_sha256: <R1 计算得到的 plan_sha256，必须原样写入结果文件元
 【3. 取证路线任务边界】
 本 subagent 取证路线：源码
 工具范围：Grep、Read、Glob、只读 Shell、Write（仅限写入输出契约指定的 `<SESSION_DIR>/review/source.md`）
-只读 Shell 范围：`test -e` / `test -f` / `test -d` / `stat` / `find` / `git ls-files` / `git status --short` / `sha256sum` / `bash -n` / `python3 -m py_compile` / 其他不会修改系统状态的 dry-run 或 syntax-check 命令
+只读 Shell 范围：`test -e` / `test -f` / `test -d` / `stat` / `find` / `git ls-files` / `git status --short` / `sha256sum` / `bash -n` / Python 内存语法检查（如 `python3 -B -c 'import sys, tokenize; p=sys.argv[1]; src=tokenize.open(p).read(); compile(src, p, "exec")' <script>`）/ 其他不会修改系统状态的 dry-run 或 syntax-check 命令
 不要做：联网、修改输出报告以外的文件、修改 Git 历史、启动/停止服务、写入外部系统
 
 【4. 执行指令】

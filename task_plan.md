@@ -49,6 +49,7 @@
 - [x] 同步 Linux 版 heavy workflows 到全局 `~/.agents/skills/`，Claude Code 侧通过 symlink 复用
 - [x] 使用 skill-creator `quick_validate.py` 校验 heavy-research / heavy-review 仓库源目录和全局安装目录
 - [x] 让 heavy-research / heavy-review 派发 subagent 时继承 main agent thinking effort，并同步到全局 Skill
+- [x] 复查 heavy-research / heavy-review 逻辑边界，修复 heavy-review 源码路线只读语法检查冲突
 - [ ] 恢复 GTD Todoist skills
 - [ ] 检查 Todoist CLI/API 和 reminder-only cron
 - [ ] 运行 health check
