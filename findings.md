@@ -137,6 +137,15 @@
 - 已同步全局 `/home/kevinlasnh/.agents/skills/heavy-research` 与 `/home/kevinlasnh/.agents/skills/heavy-review`；Claude Code 侧 symlink 自动复用。
 - 逻辑检查结果：`quick_validate.py` 对仓库源目录与全局目录共 4 项均通过；触发词一致性脚本通过；仓库与全局 skill 目录 `diff -qr` 无差异。README 的“只响应精确触发词”仍成立，因为每个 Skill 现在有两个精确触发词。
 
+## 2026-06-22 heavy workflows subagent thinking effort 对齐
+
+- 当前宿主 subagent 工具支持 `reasoning_effort` override，且省略该字段时默认继承父 agent effort；因此 Skill 文档应优先保持继承，不应无条件写入可能覆盖继承值的不同参数。
+- `heavy-research` 现在在 B2 派发规则中要求 subagent thinking effort / 推理强度与 main agent 本轮实际 effort 一致，并在 web / source / memory 三个 subagent prompt 中加入“推理强度”行。
+- `heavy-review` 现在在 R2.3 派发规则中要求 subagent thinking effort / 推理强度与 main agent 本轮实际 effort 一致，并在 web / source 两个 subagent prompt 中加入“推理强度”行。
+- 两个 core reference（`research-loop-core.md`、`review-loop-core.md`）也补充同一执行约束，明确后台 / 并行执行不代表降低 effort，同时禁止要求输出隐藏思维链。
+- 已同步全局 `/home/kevinlasnh/.agents/skills/heavy-research` 与 `/home/kevinlasnh/.agents/skills/heavy-review`；Claude Code 侧 symlink 自动复用。
+- 验证通过：仓库源和全局目录 `diff -qr` 无差异；`quick_validate.py` 对仓库源目录和全局安装目录共 4 项通过；触发词、prompt effort 覆盖、core reference 覆盖、Linux 残留和 Python 脚本语法检查均通过。
+
 ---
 *每执行2次查看/浏览器/搜索操作后更新此文件*
 *防止视觉信息丢失*

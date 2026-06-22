@@ -48,6 +48,7 @@
 - [x] 将 heavy-research / heavy-review 从 Windows PowerShell 脚本迁移为 Ubuntu/Linux Python 脚本
 - [x] 同步 Linux 版 heavy workflows 到全局 `~/.agents/skills/`，Claude Code 侧通过 symlink 复用
 - [x] 使用 skill-creator `quick_validate.py` 校验 heavy-research / heavy-review 仓库源目录和全局安装目录
+- [x] 让 heavy-research / heavy-review 派发 subagent 时继承 main agent thinking effort，并同步到全局 Skill
 - [ ] 恢复 GTD Todoist skills
 - [ ] 检查 Todoist CLI/API 和 reminder-only cron
 - [ ] 运行 health check

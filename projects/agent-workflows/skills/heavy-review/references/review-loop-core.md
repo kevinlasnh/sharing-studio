@@ -4,6 +4,8 @@
 
 加载此文件后，再加载对应取证路线的专项文件（subagent-web.md 或 subagent-source.md）。
 
+父 prompt 中的“推理强度”行是执行约束：本 subagent 必须以与 main agent 相同的 thinking effort / 推理强度完成本路线审查，后台 / 并行执行不代表降低 effort。该约束不要求输出隐藏思维链；最终报告只写证据、结论和 3-5 行审查轨迹摘要。
+
 ---
 
 ## 6步骨架

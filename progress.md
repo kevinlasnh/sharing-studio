@@ -366,3 +366,21 @@
   - 触发词一致性脚本：pass。
   - `skill-creator/scripts/quick_validate.py` 校验仓库源目录和全局安装目录的 `heavy-research` / `heavy-review`：4 项均 `Skill is valid!`。
   - 逻辑扫描未发现与“只响应精确触发词”相矛盾的表述；当前语义是每个 Skill 分别有两个精确触发词。
+
+### 阶段 4：heavy workflows subagent thinking effort 对齐
+- **状态：** complete
+- **更新时间：** 2026-06-22 15:42 +0800
+- 执行的操作：
+  - 扫描 `heavy-research` 与 `heavy-review` 的所有 subagent 派发点和 prompt 模板。
+  - 在 `heavy-research/SKILL.md` 的 B2 派发规则中新增 thinking effort 继承规则，并在联网、源码、记忆三个 subagent prompt 中加入“推理强度”行。
+  - 在 `heavy-review/SKILL.md` 的 R2.3 派发规则中新增 thinking effort 继承规则，并在联网、源码两个 subagent prompt 中加入“推理强度”行。
+  - 在 `research-loop-core.md` 和 `review-loop-core.md` 中补充同一执行约束，确保 subagent 读取 core reference 后仍能保持与 main agent 一致的推理强度。
+  - 将仓库源目录同步到 `/home/kevinlasnh/.agents/skills/heavy-research` 和 `/home/kevinlasnh/.agents/skills/heavy-review`；Claude Code 侧 symlink 自动复用。
+- 验证：
+  - `quick_validate.py` 校验仓库源目录和全局安装目录的 `heavy-research` / `heavy-review`：4 项均 `Skill is valid!`。
+  - 机械覆盖检查：Research 3 个 subagent prompt 均含“推理强度”行；Review 2 个 subagent prompt 均含“推理强度”行；两个 core reference 均含 effort 约束。
+  - Linux 残留扫描 `powershell|pwsh|.ps1|Windows|C:\\|G:\\`：无输出。
+  - Python 脚本语法检查使用内存 `compile()` 覆盖 4 个脚本：pass。
+  - 仓库源目录与全局安装目录 `diff -qr`：无差异。
+- 备注：
+  - 首次语法检查生成了临时 `__pycache__`，已清理并改用内存 `compile()` 复跑，避免验证产物污染仓库。

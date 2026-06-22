@@ -100,6 +100,8 @@ description: Trigger this skill only when the user says exactly "准备开始进
 
 并行执行语义：使用当前宿主支持且当前规则允许的后台 / 并行 agent 机制。若宿主不支持 `run_in_background` 字段，则使用宿主原生等价能力；若宿主不支持后台 agent、当前宿主策略不允许在本请求下派子代理、或文件可见性闭环无法满足，则按维度顺序执行，但仍保持相同的文件输出契约。
 
+Thinking effort 继承：派发任何 subagent 前，main agent 必须使用宿主能保证 subagent 与当前 main agent 本轮实际 thinking effort / 推理强度一致的方式。若宿主默认继承父级 reasoning effort（例如省略 `reasoning_effort` 即继承），不要设置会覆盖继承值的不同参数；若宿主需要显式 `thinking_effort`、`reasoning_effort` 或等价参数且当前 main effort 值可见，派发时必须设置为同一值；若宿主不暴露该参数或当前值不可见，则必须在每个 subagent prompt 中保留下方“推理强度”约束，并且不得设置任何已知会低于或偏离 main agent effort 的覆盖值。该要求只约束推理预算和审慎程度，不要求 subagent 输出隐藏思维链。
+
 结果文件可见性闭环：
 - 只有当父 agent 能直接读取 subagent 写入的 `<SESSION_DIR>/research/*.md`，或宿主能把隔离 / forked workspace 中的结果文件合并回当前工作区时，才使用 subagent 并行。
 - 若宿主的 subagent 文件写入对父 agent 不可见，且没有可靠的文件合并机制，则不要派 subagent；main agent 按联网 → 源码（如启用）→ 记忆的顺序自行执行各维度流程，并写入同样的结果文件。
@@ -107,7 +109,7 @@ description: Trigger this skill only when the user says exactly "准备开始进
 
 每个 subagent 的 prompt 使用以下五段式模板：
 
-派发前要求：下方模板中的尖括号仅用于说明变量；真正发送给 subagent 的 prompt 必须把所有变量替换成完整文本，不得保留任何引用式省略或尖括号占位；每个 prompt 必须包含本轮 `run_id`；完成信号必须写成精确的 `Done: web` / `Done: source` / `Done: memory`。
+派发前要求：下方模板中的尖括号仅用于说明变量；真正发送给 subagent 的 prompt 必须把所有变量替换成完整文本，不得保留任何引用式省略或尖括号占位；每个 prompt 必须包含本轮 `run_id` 和“推理强度”行；完成信号必须写成精确的 `Done: web` / `Done: source` / `Done: memory`。
 
 ---
 
@@ -121,6 +123,7 @@ description: Trigger this skill only when the user says exactly "准备开始进
 侧重：<deployment-plan 的关注重点>
 关键约束：<环境、版本、已有限制>
 run_id: <本轮 run_id，必须原样写入结果文件元数据>
+推理强度：必须与派发你的 main agent 当前 thinking effort / 推理强度一致；不得因为后台 / 并行执行而低于或偏离 main agent 的 effort；不要输出隐藏思维链，只在执行深度、证据覆盖和结果完整性上体现同等 effort。
 
 【2. 调研提纲】
 <树形子问题清单，含编号、层级和 P0/P1/P2 优先级；优先级标签必须原样保留>
@@ -156,6 +159,7 @@ run_id: <本轮 run_id，必须原样写入结果文件元数据>
 侧重：<deployment-plan 的关注重点>
 关键约束：<环境、版本、已有限制>
 run_id: <本轮 run_id，必须原样写入结果文件元数据>
+推理强度：必须与派发你的 main agent 当前 thinking effort / 推理强度一致；不得因为后台 / 并行执行而低于或偏离 main agent 的 effort；不要输出隐藏思维链，只在执行深度、证据覆盖和结果完整性上体现同等 effort。
 
 【2. 调研提纲】
 <树形子问题清单，含编号、层级和 P0/P1/P2 优先级；优先级标签必须原样保留>
@@ -187,6 +191,7 @@ run_id: <本轮 run_id，必须原样写入结果文件元数据>
 侧重：<deployment-plan 的关注重点>
 关键约束：<环境、版本、已有限制>
 run_id: <本轮 run_id，必须原样写入结果文件元数据>
+推理强度：必须与派发你的 main agent 当前 thinking effort / 推理强度一致；不得因为后台 / 并行执行而低于或偏离 main agent 的 effort；不要输出隐藏思维链，只在执行深度、证据覆盖和结果完整性上体现同等 effort。
 
 【2. 调研提纲】
 <树形子问题清单，含编号、层级和 P0/P1/P2 优先级；优先级标签必须原样保留>
