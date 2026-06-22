@@ -1,6 +1,6 @@
 ---
 name: heavy-research
-description: Trigger this skill only when the user says exactly "准备开始进行重型调研". Do not trigger for other research, planning, deployment, or investigation requests. When triggered, it investigates web, optional local source code, and memory dimensions using parallel subagents when result files are visible, otherwise sequential fallback, then synthesizes findings into a deployment plan.
+description: Trigger this skill only when the user says exactly "准备开始进行重型调研" or "准备开始进行 Heavy Research". Do not trigger for other research, planning, deployment, or investigation requests. When triggered, it investigates web, optional local source code, and memory dimensions using parallel subagents when result files are visible, otherwise sequential fallback, then synthesizes findings into a deployment plan.
 ---
 
 # heavy-research

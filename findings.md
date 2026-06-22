@@ -129,6 +129,14 @@
 - 仓库源目录与全局 `/home/kevinlasnh/.agents/skills/heavy-research` / `heavy-review` 已同步；Claude Code 侧 symlink 继续指向 `.agents` 真源。
 - 验证通过：Python 编译、临时 `.workflows` smoke test、全局脚本 smoke test、PowerShell/`.ps1` 残留扫描、`skill-creator/scripts/quick_validate.py` 对仓库源目录和全局安装目录共 4 次校验。
 
+## 2026-06-22 heavy workflows 触发词扩展
+
+- `heavy-research` 现在接受两个精确触发词：`准备开始进行重型调研` 和 `准备开始进行 Heavy Research`。
+- `heavy-review` 现在接受两个精确触发词：`准备开始进行重型审查` 和 `准备开始进行 Heavy Review`。
+- 已同步更新 `projects/agent-workflows/README.md` 与 `README.zh-CN.md` 的触发词表。
+- 已同步全局 `/home/kevinlasnh/.agents/skills/heavy-research` 与 `/home/kevinlasnh/.agents/skills/heavy-review`；Claude Code 侧 symlink 自动复用。
+- 逻辑检查结果：`quick_validate.py` 对仓库源目录与全局目录共 4 项均通过；触发词一致性脚本通过；仓库与全局 skill 目录 `diff -qr` 无差异。README 的“只响应精确触发词”仍成立，因为每个 Skill 现在有两个精确触发词。
+
 ---
 *每执行2次查看/浏览器/搜索操作后更新此文件*
 *防止视觉信息丢失*

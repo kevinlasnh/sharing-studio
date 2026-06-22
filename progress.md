@@ -352,3 +352,17 @@
   - `skill-creator/scripts/quick_validate.py` 校验仓库源目录和全局安装目录的 `heavy-research` / `heavy-review`：4 项均 `Skill is valid!`。
 - 后续：
   - 继续恢复 GTD Todoist skills、Todoist CLI/API 和 reminder-only cron。
+
+### 阶段 4：heavy workflows 触发词扩展
+- **状态：** complete
+- **更新时间：** 2026-06-22 16:55 +0800
+- 执行的操作：
+  - 将 `heavy-research` frontmatter description 从单一触发词扩展为 `准备开始进行重型调研` 或 `准备开始进行 Heavy Research`。
+  - 将 `heavy-review` frontmatter description 从单一触发词扩展为 `准备开始进行重型审查` 或 `准备开始进行 Heavy Review`。
+  - 同步更新 `projects/agent-workflows/README.md` 与 `projects/agent-workflows/README.zh-CN.md` 中的触发词表。
+  - 用 `rsync -a --delete` 将两个仓库源 Skill 同步到 `/home/kevinlasnh/.agents/skills/`；Claude Code 侧继续通过 symlink 复用。
+- 验证：
+  - 仓库源目录与全局安装目录 `diff -qr`：无差异。
+  - 触发词一致性脚本：pass。
+  - `skill-creator/scripts/quick_validate.py` 校验仓库源目录和全局安装目录的 `heavy-research` / `heavy-review`：4 项均 `Skill is valid!`。
+  - 逻辑扫描未发现与“只响应精确触发词”相矛盾的表述；当前语义是每个 Skill 分别有两个精确触发词。

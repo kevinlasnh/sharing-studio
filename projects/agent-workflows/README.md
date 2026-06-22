@@ -38,8 +38,8 @@ agent-workflows/
 
 | Skill | Trigger | Role | Output |
 | :--- | :--- | :--- | :--- |
-| `heavy-research` | `准备开始进行重型调研` | Planner | `.workflows/<session>/deployment-plan.md` |
-| `heavy-review` | `准备开始进行重型审查` | Reviewer | Inline fixes back into the same deployment plan after user approval |
+| `heavy-research` | `准备开始进行重型调研` / `准备开始进行 Heavy Research` | Planner | `.workflows/<session>/deployment-plan.md` |
+| `heavy-review` | `准备开始进行重型审查` / `准备开始进行 Heavy Review` | Reviewer | Inline fixes back into the same deployment plan after user approval |
 
 ## Workflow
 

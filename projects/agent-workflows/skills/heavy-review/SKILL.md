@@ -1,6 +1,6 @@
 ---
 name: heavy-review
-description: Trigger this skill only when the user says exactly "准备开始进行重型审查". Do not trigger for other review, audit, safety-check, deployment, or plan-checking requests. When triggered, it reads the latest available deployment-plan.md, checks web and local source evidence routes using parallel subagents when result files are visible, otherwise sequential fallback, then lets the user approve fixes that get edited directly into the same plan file.
+description: Trigger this skill only when the user says exactly "准备开始进行重型审查" or "准备开始进行 Heavy Review". Do not trigger for other review, audit, safety-check, deployment, or plan-checking requests. When triggered, it reads the latest available deployment-plan.md, checks web and local source evidence routes using parallel subagents when result files are visible, otherwise sequential fallback, then lets the user approve fixes that get edited directly into the same plan file.
 ---
 
 # heavy-review
