@@ -155,6 +155,16 @@
 - 已同步全局 `/home/kevinlasnh/.agents/skills/heavy-review`；`heavy-research` 本轮未发现需修改的逻辑问题。仓库源目录与全局安装目录 `diff -qr` 无差异，Claude Code 侧 symlink 自动复用。
 - 验证通过：`quick_validate.py` 对仓库源和全局安装目录的 `heavy-research` / `heavy-review` 共 4 项通过；结构化一致性检查、Linux/PowerShell 残留扫描、脚本内存语法检查、`git diff --check` 均通过。
 
+## 2026-06-22 heavy workflows 再次最细逻辑复查
+
+- 发现并修复 `heavy-review` 源码路线只读 Shell 白名单中的 `git status --short` 风险：本机 Git 文档说明普通 `git status` 可能作为副作用刷新 index；已改为 `git --no-optional-locks status --short`，并同步到主 prompt 与 source reference。
+- 发现并修复源码语法检查示例里的 `<script>` 占位风险：该写法若被复制到 shell 中会被解释为重定向语法；已改为 `SCRIPT_PATH`。
+- 收紧 dry-run 逻辑：Review 源码路线现在只允许已确认不会写缓存、锁文件、构建产物或外部状态的 dry-run / syntax-check；不确定时必须标记 `UNVERIFIABLE` 或改用静态证据。
+- 修复 `heavy-research` 恢复规则文字冲突：B0 允许在 `_run.md` 缺失或半写且无法可靠修正时确认一次缺失恢复字段，底部约束现已同步覆盖该例外。
+- 补齐 reference 与主流程一致性：Research 综合模板明确“方案不合理”重跑时复用同一 SESSION_DIR、生成新 `run_id` 且不混合旧报告；Review 综合模板明确“修复方案不合理”时使用新的 `review_run_id` 且不混合旧报告；deployment-plan 模板明确文件由阶段 D 写入而非脚本预创建。
+- 仓库源与全局 `/home/kevinlasnh/.agents/skills/heavy-research` / `heavy-review` 已同步，Claude Code 侧 symlink 自动复用。
+- 验证通过：仓库源与全局安装目录 `quick_validate.py` 共 4 项通过；自定义一致性检查、Python helper 内存编译、仓库/全局 `diff -qr`、`__pycache__` / `.pyc` 扫描、危险残留扫描和 `git diff --check` 均通过。
+
 ---
 *每执行2次查看/浏览器/搜索操作后更新此文件*
 *防止视觉信息丢失*

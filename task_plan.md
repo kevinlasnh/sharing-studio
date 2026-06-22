@@ -4,7 +4,7 @@
 在新 Ubuntu 系统上恢复并微调个人 agent 脚手架，使 Codex、brv、PWF 和后续 Second Brain/GTD 流程能按当前系统运行。
 
 ## 当前阶段
-阶段 3
+阶段 4
 
 ## 各阶段
 
@@ -50,10 +50,11 @@
 - [x] 使用 skill-creator `quick_validate.py` 校验 heavy-research / heavy-review 仓库源目录和全局安装目录
 - [x] 让 heavy-research / heavy-review 派发 subagent 时继承 main agent thinking effort，并同步到全局 Skill
 - [x] 复查 heavy-research / heavy-review 逻辑边界，修复 heavy-review 源码路线只读语法检查冲突
+- [x] 再次最细复查 heavy-research / heavy-review 逻辑边界，修复 Review 只读 Git 状态、dry-run 写入风险和 Research/Review reference 一致性问题
 - [ ] 恢复 GTD Todoist skills
 - [ ] 检查 Todoist CLI/API 和 reminder-only cron
 - [ ] 运行 health check
-- **状态：** pending
+- **状态：** in_progress
 
 ### 阶段 5：收口和同步策略
 - [x] 创建并部署 `~/.claude/CLAUDE.md`，与 `~/.codex/AGENTS.md` 按全局同步规则保持 H1 以下一致

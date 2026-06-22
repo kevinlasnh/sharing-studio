@@ -401,3 +401,27 @@
   - Python helper 脚本内存 `compile()` 语法检查：pass。
   - 仓库源目录与全局安装目录 `diff -qr`：无差异。
   - `git diff --check`：pass。
+
+### 阶段 4：heavy workflows 再次最细逻辑复查
+- **状态：** complete
+- **更新时间：** 2026-06-22 18:15 +0800
+- 执行的操作：
+  - 重新读取 `planning-with-files-zh` 与 `skill-creator` 规则，并按 PWF 恢复 `task_plan.md` / `findings.md` / `progress.md`。
+  - 重新完整读取 `heavy-research` / `heavy-review` 的 `SKILL.md`、所有 reference 和 4 个 Python helper 脚本。
+  - 检查触发词、Ubuntu/Linux 假设、subagent thinking effort 继承、恢复 / 重跑状态机、文件可见性闭环、只读 Shell 白名单、dry-run 边界和模板占位规则。
+  - 修复 `heavy-review` 源码路线：将 `git status --short` 改为 `git --no-optional-locks status --short`，避免普通 status 的 index refresh 副作用与只读边界冲突。
+  - 修复 `heavy-review` 源码路线：将 `bash -n <script>` / Python compile 示例中的 `<script>` 改为 `SCRIPT_PATH`，避免 shell 重定向歧义。
+  - 收紧 `heavy-review` dry-run 规则，要求确认无缓存、锁文件、构建产物或外部状态写入；不确定时标记 `UNVERIFIABLE`。
+  - 修复 `heavy-research` 恢复规则底部约束，使其覆盖 `_run.md` 缺失或半写时的单次恢复字段确认例外。
+  - 补齐 `heavy-research` / `heavy-review` synthesis reference 与主流程的一致性，并澄清 deployment-plan 文件由阶段 D 写入。
+  - 用 `rsync -a --delete` 将两个仓库源 Skill 同步到 `/home/kevinlasnh/.agents/skills/`；Claude Code 侧 symlink 自动复用。
+- 验证：
+  - `quick_validate.py` 校验仓库源和全局安装目录的 `heavy-research` / `heavy-review`：4 项均 `Skill is valid!`。
+  - 自定义一致性检查：触发词、exact-trigger 描述、subagent prompt effort 行数、core effort 约束、Review no-optional-locks、`SCRIPT_PATH`、无 `<script>`、无 `py_compile`、dry-run cache guard、Research/Review 重跑 reference 对齐、Research 恢复例外对齐均通过。
+  - 4 个 Python helper 脚本使用内存 `compile()` 语法检查：pass。
+  - 仓库源目录与全局安装目录 `diff -qr`：无差异。
+  - 仓库源和全局安装目录无 `__pycache__` / `.pyc`。
+  - 危险残留扫描 `powershell|pwsh|.ps1|Windows|C:\\|G:\\|py_compile|<script>|git status --short`：无命中。
+  - `git diff --check`：pass。
+- 遇到的问题：
+  - 一次 `rg` 命令字符串中包含反引号包裹的 `run_id`，shell 先尝试执行命令替换并输出 `run_id: command not found`；未影响文件，后续搜索改用单引号避免命令替换。

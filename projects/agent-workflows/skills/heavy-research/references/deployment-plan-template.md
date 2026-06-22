@@ -2,7 +2,7 @@
 
 用户确认调研摘要合理后，main agent 按此模板写 deployment-plan 文件。
 
-文件路径：`<SESSION_DIR>/deployment-plan.md`（与本次 research 同级，由 `python3 ~/.agents/skills/heavy-research/scripts/new-session-dir.py` 创建）
+文件路径：`<SESSION_DIR>/deployment-plan.md`（与本次 research 同级；`SESSION_DIR` 由 `python3 ~/.agents/skills/heavy-research/scripts/new-session-dir.py` 创建，`deployment-plan.md` 由阶段 D 写入）
 
 ---
 

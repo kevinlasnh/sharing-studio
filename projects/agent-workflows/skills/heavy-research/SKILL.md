@@ -318,5 +318,5 @@ run_id: <本轮 run_id，必须原样写入结果文件元数据>
 ## 约束
 
 - 优先在单 session 内完成；若发生 context compaction 或中断，必须从已创建的 `<SESSION_DIR>` 和 `research/` 文件恢复，不得丢弃已完成维度结果
-- 阶段 B 期间不中途暂停问用户，澄清在阶段 A 一次性完成；唯一例外是中断恢复时 `<SESSION_DIR>/research/_run.md` 缺失且 source 维度是否启用无法从阶段 A 当前上下文可靠判断，此时只允许向用户确认一次 source 是否启用，确认后继续恢复流程。已有 `source.md` 只能作为弱线索，不能单独跳过确认
+- 阶段 B 期间不中途暂停问用户，澄清在阶段 A 一次性完成；唯一例外是中断恢复时 `<SESSION_DIR>/research/_run.md` 缺失或半写，且 source 维度、调研提纲或其他继续执行所需字段无法从阶段 A 当前上下文和已存在报告可靠修正。此时只允许围绕缺失恢复字段向用户确认一次，确认后继续恢复流程。已有 `source.md` 只能作为弱线索，不能单独跳过确认或补齐 metadata 复用
 - 调研摘要确认前不写 deployment-plan

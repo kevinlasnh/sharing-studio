@@ -4,7 +4,7 @@
 
 ## 工具
 
-Grep + Read + Glob + 只读 Shell（`test -e` / `test -f` / `test -d` / `stat` / `find` / `git ls-files` / `git status --short` / `sha256sum` / `bash -n` / Python 内存语法检查 / 其他不会修改系统状态的 dry-run 或 syntax-check 命令）+ Write（仅限输出契约指定的 review 报告文件）
+Grep + Read + Glob + 只读 Shell（`test -e` / `test -f` / `test -d` / `stat` / `find` / `git ls-files` / `git --no-optional-locks status --short` / `sha256sum` / `bash -n` / Python 内存语法检查 / 其他已确认不会写入缓存、锁文件、构建产物或外部状态的 dry-run / syntax-check 命令）+ Write（仅限输出契约指定的 review 报告文件）
 
 ---
 
@@ -64,17 +64,17 @@ Grep + Read + Glob + 只读 Shell（`test -e` / `test -f` / `test -d` / `stat` /
 **检查 A：静态语法预检**
 plan 内出现的代码块 / shell 命令必须按语言做语法检查。
 
-- Bash 脚本文件：`bash -n <script>`
+- Bash 脚本文件：`bash -n SCRIPT_PATH`
 - inline Bash 片段：优先通过 stdin / here-doc 等无持久文件方式交给 `bash -n` 做语法检查；不得把片段保存到仓库或临时 scratch 文件，也不得直接执行片段里的真实操作命令。若宿主无法无写入地解析该片段，标记 UNVERIFIABLE
-- Python 脚本文件：使用内存 `compile()` 检查，例如 `python3 -B -c 'import sys, tokenize; p=sys.argv[1]; src=tokenize.open(p).read(); compile(src, p, "exec")' <script>`；不得使用会在源码目录生成 `__pycache__` / `.pyc` 的检查方式
+- Python 脚本文件：使用内存 `compile()` 检查，例如 `python3 -B -c 'import sys, tokenize; p=sys.argv[1]; src=tokenize.open(p).read(); compile(src, p, "exec")' SCRIPT_PATH`；不得使用会在源码目录生成 `__pycache__` / `.pyc` 的检查方式
 - JSON / YAML / TOML 等配置：优先使用仓库已有 lint/test 工具；没有工具时至少用对应解析器只读解析
 
 语法错误直接标记 FAIL，并把解析错误写入证据。无法确定语言或缺少解析器时标记 UNVERIFIABLE，不得当作 PASS。
 
 **检查 B：dry-run 验证**
-plan 中调用支持 dry-run / check / no-op 的命令时，必须优先用这些模式演练并把输出贴回 finding。例如 `rsync --dry-run`、`git diff --check`、`npm run lint -- --dry-run`（若项目支持）、工具自身的 `--check` / `--validate` / `--no-write` 模式等。
+plan 中调用支持 dry-run / check / no-op 的命令时，必须先确认该模式不会写入缓存、锁文件、构建产物或外部状态，再用这些模式演练并把输出贴回 finding。例如 `rsync --dry-run`、`git --no-optional-locks diff --check`、项目明确声明无写入的 lint dry-run、工具自身文档明确无写入的 `--check` / `--validate` / `--no-write` 模式等。
 
-演练结果与 plan 预期不符 = FAIL（风险依据：dry-run 与预期不符）。若命令没有安全 dry-run 模式，不得执行真实修改；改为 UNVERIFIABLE 或用静态证据替代。
+演练结果与 plan 预期不符 = FAIL（风险依据：dry-run 与预期不符）。若命令没有安全 dry-run 模式，或 dry-run 可能写缓存 / lock / build output / 外部状态，不得执行真实修改；改为 UNVERIFIABLE 或用静态证据替代。
 
 **检查 C：备份-回滚命令对账**
 plan 中"backup → restore"对儿，比对产物文件名是否一致：
