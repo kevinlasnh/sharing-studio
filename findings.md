@@ -178,3 +178,27 @@
 ---
 *每执行2次查看/浏览器/搜索操作后更新此文件*
 *防止视觉信息丢失*
+
+## 2026-07-26 Heavy Workflows 再审查启动发现
+
+- 当前仓库源目录仍为 `projects/agent-workflows/skills/heavy-research` 与 `projects/agent-workflows/skills/heavy-review`。
+- PWF 显示 2026-06-22 已做过多轮逻辑修复和全局同步，但本轮完成条件要求以当前 worktree 与本机安装状态重新证明，不直接沿用旧的“零问题”结论。
+- 本轮必须同时覆盖：主 `SKILL.md`、全部 references、helper scripts、README 触发契约、源目录与全局安装一致性、Claude Code symlink、可执行 smoke tests、最终 Git commit 与远端 push 状态。
+- 当前本机 `~/.agents/skills/heavy-research` 与 `heavy-review` 存在且和仓库源目录无 diff；但 `~/.claude/skills/heavy-research` 与 `heavy-review` 均不存在，历史记录中的跨宿主 symlink 已丢失，最终重新装载必须补回并验证。
+- Heavy Review 的核心闭环存在自相矛盾：R1/R2 明确规定 plan hash 变化后旧 review 报告不可复用，但 R4 inline 修改 plan 后直接宣称“可以基于此版本部署”并结束，没有对新 hash 版本做 post-fix verification；修复本身可能引入新冲突，当前证据不能证明修改后的 plan 已通过审查。
+- `find-latest-session.py` 的 active 指针路线会校验路径仍位于当前 `.workflows/`，但 fallback candidates 未复用该校验；`find-latest-plan.py` 也会跟随时间戳目录 symlink 到仓库外，`ensure-review-dir.py` 则接受任意目录。组合后可能审查或创建 review 目录到授权仓库之外，路径闭环不完整。
+- `heavy-review/references/review-framework.md` 含本机特化且逻辑错误的“跨仓库影响”定义，并把所有 `git push` 一概判 HIGH；`subagent-source.md` 又把 PWF 三件套一概视为不得 push，直接与本仓当前“PWF 必须 Git 跟踪并推送”的仓库规则冲突。公共 Skill 应依据目标仓库的明确 policy、Git ignore 和敏感内容边界判断，不能硬编码个人仓库规则。
+- Research 恢复契约的完整性检查未覆盖 `_run.md` 的 `topic` / `mode` 有效性；Review 恢复契约未明确要求 `plan_path` 存在且等于当前 `PLAN_PATH`。两者都可能把字段不完整的半写父契约误判为可恢复。
+- Review R2.4 的“证据级别缺失即失败”未限定到需要证据的 FAIL finding，和 PASS / UNVERIFIABLE 模板本身不要求证据级别存在冲突，需收窄校验条件。
+- 两份 README 的流程图在 inline fix 后结束，复现了 post-fix 未复审缺口；“本地 planning 文件都留在 Git 之外”也与本仓实际跟踪 PWF 的 policy 不一致，需要改为尊重目标仓库策略且不发布私密内容。
+
+## 2026-07-26 Heavy Workflows 首批加固发现
+
+- Review 的 plan 内容和 plan hash 必须来自同一次 byte read；分别读取会产生 TOCTOU，导致报告审查的内容与声明 hash 不一致。当前已增加稳定 plan snapshot helper，但后续所有报告与复审契约仍需统一只引用该快照。
+- 仅绑定 plan hash 不足以复用审查结果：源码在 plan 不变时仍可能漂移。Review 需要同时绑定 Git-visible source snapshot，并在源码状态变化后使旧报告失效。
+- inline fix 必须绑定用户批准记录和 expected plan hash，并具备锁、备份、原子替换与 checkpoint；修改完成后还必须以新 hash 和新 `review_run_id` 自动完整复审，不能直接宣称可部署。
+- Research 的综合摘要、用户批准和 plan provenance 若只存在聊天上下文，会与“文件是真源”冲突；这些状态必须持久化，并由 Review 在进入审查前校验其链路完整性与防篡改 hash。
+- `.active-session` 不能无限保留；session 完成或放弃后必须关闭。fallback 找到合法未完成 session 后还应重新原子写回 active pointer，避免后续继续扫描或误恢复旧任务。
+- 时间戳目录不能只靠正则判断，必须用真实日期解析并拒绝伪日期、`-0` 和非法前导零后缀；所有 helper 应共享同一语义。
+- plan 中的 Markdown 内容不能直接成为 `_run.md` 控制字段；必须编码或使用独立结构化 metadata，避免换行和伪字段注入。`unverified`、`STALE`、`CONFLICT` 等状态也不能因文件存在或字符串命中而被误判为 PASS。
+- 当前首批 helper 和 Research 契约只解决了部分底层机制；Heavy Review references、证据等级映射、web privacy/URL 边界、公共 Git/PWF policy、post-fix 复审和自动化测试仍是发布阻断项。

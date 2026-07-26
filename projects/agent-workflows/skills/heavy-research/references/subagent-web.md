@@ -4,7 +4,7 @@
 
 ## 工具
 
-Read（仅限读取 heavy-research reference 文件）+ 当前宿主内置 WebSearch / WebFetch 等价工具 + Write（仅限输出契约指定的 research 报告文件）
+Read（仅限 heavy-research reference）+ 当前宿主内置 Web Search / Fetch；内置能力不可用或失败时使用宿主全局规则批准的只读 web-search fallback（本机为 `tavily-search` / `tvly search`）+ Write（仅限输出契约指定的 report）
 
 ---
 
@@ -27,7 +27,7 @@ Read（仅限读取 heavy-research reference 文件）+ 当前宿主内置 WebSe
 ## 专项强化 5：来源三角验证
 
 每条关键结论必须满足：
-- **至少 2 个独立来源**印证 → 标记为 `confirmed`
+- **至少 2 个原始来源独立的证据**印证 → 标记为 `confirmed`；镜像、聚合同一公告、互相转述或同一作者的派生材料不算独立
 - 只有 1 个来源 → 标记为 `unverified`，在摘要中显式区分
 - 2 个来源互相矛盾 → 置信度字段标记为 `CONFLICT`，两种说法都保留，不自行裁决；main agent 综合展示时可显示为 `⚠️ CONFLICT`
 

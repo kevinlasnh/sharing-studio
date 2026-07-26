@@ -6,6 +6,8 @@
 
 Grep + Read + Glob + Write（仅限输出契约指定的 research 报告文件）
 
+父 prompt 必须提供 `source_roots_json` / `source_excludes_json`。只读取 canonical path 位于授权 root 内且不在 exclude 中的文件；任何 symlink 解析后越界、权限不明或 root 未提供的路径都标记 `UNVERIFIABLE`，不得自行扩大范围。
+
 ---
 
 ## 源码路线置信度定义

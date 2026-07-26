@@ -443,3 +443,37 @@
   - 4 个 helper 脚本通过内存 `compile()`；临时目录 smoke test 覆盖 session 创建、latest session 查找、review 目录创建和 latest plan 查找。
   - 仓库源与全局安装目录 `diff -qr` 无差异；全局 Claude Code symlink 指向 `.agents`；危险残留扫描和 `git diff --check` 均通过；无 `__pycache__` / `.pyc`。
   - 最后一轮未发现新增逻辑问题。
+
+## 会话：2026-07-26
+
+### 阶段 4：Heavy Research / Heavy Review 逻辑闭环再审查
+- **状态：** in_progress
+- **开始时间：** 2026-07-26 +0800
+- 执行的操作：
+  - 归一化并确认当前工作目录为 `sharing-studio` 仓库根，未命中 Second Brain Path Guard。
+  - 完整读取 `planning-with-files-zh` 与 `skill-creator` 的工作规则，恢复并读取 PWF 三件套，运行 `session-catchup.py`，未报告未同步会话。
+  - 确认 Git 当前位于 `master`，初始工作区 clean，跟踪 `origin/master`。
+  - 建立本轮“盘点 → 逻辑审查 → 修复 → 同标准零问题复审 → 本机重新装载 → commit/push 核验”计划。
+- 当前结论：
+  - 2026-06-22 的历史记录只能作为线索，不能替代本轮对当前文件、安装副本、测试和远端状态的重新取证。
+  - 已完整读取两个 Skill 的主文档、全部 references、四个 helper scripts 和双语 README；已确认 post-fix 复审缺失、helper symlink 逃逸、硬编码个人 Git/PWF policy、恢复字段校验不完整、证据级别校验歧义和 Claude 安装链接缺失等问题。
+- 遇到的问题：
+  - 首次 PWF `apply_patch` 因错误假定 `progress.md` 末尾仍有 footer 而上下文匹配失败；未产生文件变更，改用当前真实 EOF 上下文后成功追加。
+
+### 阶段 4：Heavy Workflows 首批加固中间检查点
+- **状态：** in_progress（中间检查点，尚不可视为最终可发布版本）
+- **更新时间：** 2026-07-26 15:50 +0800
+- 执行的操作：
+  - 汇总三条独立审查路线，确认 post-fix 未复审、Research/Review provenance 缺失、session 生命周期不闭合、helper symlink 越界、plan/source 快照不稳定、证据状态误判和公共 Git/PWF policy 硬编码等问题。
+  - 为 Heavy Research 增加 session identity、topic hash、phase/status、原子 active pointer、source roots/excludes、持久 attempts、summary/approval/provenance 和 deployment-plan 验证相关契约。
+  - 新增 `update-session-state.py`、`emit-plan-provenance.py`、`validate-deployment-plan.py`，并加固 `new-session-dir.py`、`find-latest-session.py` 的路径与恢复规则。
+  - 为 Heavy Review 引入同一次读取生成的 plan snapshot/hash、Research provenance 校验、Git-visible source snapshot，以及带批准记录、期望 hash、锁、备份和 checkpoint 的 inline fix helper。
+  - 新增 `verify-plan-provenance.py`、`capture-plan.py`、`capture-source-snapshot.py`、`apply-inline-fixes.py`，并加固 `find-latest-plan.py`、`ensure-review-dir.py` 的仓库边界与 symlink 拒绝规则。
+- 检查点级验证：
+  - 两个 Skill 目录下 11 个 Python 脚本使用内存 `compile()`：pass，未生成 `.pyc`。
+  - `quick_validate.py` 校验仓库源 `heavy-research` / `heavy-review`：2 项均 `Skill is valid!`。
+  - `git diff --check`：pass。
+- 未完成 / 后续：
+  - Heavy Review 后半段 R2/R3/R4、全部 review references、双语 README 和 post-fix 自动完整复审契约仍需统一。
+  - Research 文档一致性、严格时间戳校验、active pointer 恢复重写、provenance 字段校验和 plan validator 表格定位仍需补强。
+  - 尚未补齐自动化不变量与行为 smoke tests，尚未同步本机全局 Skill；本次提交仅用于保存进度。

@@ -10,7 +10,7 @@
 
 ## 记忆路线置信度定义
 
-- `confirmed`：至少两个相互独立的历史记录（例如 ByteRover 节点 + findings.md，或两个不同 ByteRover 节点）给出一致结论。
+- `confirmed`：至少两个能证明**原始来源独立**的历史记录给出一致结论。不同存储位置、ByteRover 节点或 findings 段落若来自同一原始记录、同一作者复述或互相派生，仍只算一个来源。
 - `unverified`：只有一条历史记录、记录时间不明、或历史记录只能作为参考但缺少相互印证。
 - `CONFLICT`：ByteRover 与 findings.md、或不同历史记录之间出现不同说法；保留全部说法，不自行裁决。
 
