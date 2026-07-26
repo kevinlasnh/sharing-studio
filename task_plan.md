@@ -56,7 +56,7 @@
 - [x] 2026-07-26 以当前 worktree 为权威重新审查 heavy-research / heavy-review 的逻辑一致性、逻辑谬误和状态闭环
 - [x] 为本轮审查补充可重复的自动化不变量与行为 smoke tests，并修复所有发现
 - [x] 按同一标准复审至最后一轮零问题，再重新装载本机全局 Skill
-- [ ] 提交并推送本轮 Heavy Workflows 优化，核验远端包含最终提交
+- [x] 提交并推送本轮 Heavy Workflows 优化，核验远端包含最终提交
 - [ ] 恢复 GTD Todoist skills
 - [ ] 检查 Todoist CLI/API 和 reminder-only cron
 - [ ] 运行 health check

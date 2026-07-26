@@ -635,3 +635,8 @@
   - 两个源/安装目录 `diff -qr` 无差异；全局 quick_validate 2/2 pass；安装副本 19/19 helper 内存 compile；无 `__pycache__` / `.pyc`。
 - 下一步：
   - 审查提交边界与敏感信息，提交、push 并核验远端 commit。
+- 发布：
+  - staged 边界审查确认 36 个文件全部属于 Heavy Workflows、自动化测试与 PWF；根 agent markdown / `.brv` 保持 ignored，常见凭据格式扫描 clean。
+  - 创建功能提交 `e503e7c`（`feat: harden heavy workflow contracts`），并成功 push `master`。
+  - `git rev-parse HEAD` 与 `git ls-remote origin refs/heads/master` 均为 `e503e7ce8cad0e3a2d6b23c3405ea0562f037999`，确认远端包含完整功能提交。
+  - Heavy Research / Heavy Review 本轮优化、零问题复审、本机重新装载和功能提交/push 已完成；后续阶段 4 只剩独立的 GTD Todoist 恢复事项。
