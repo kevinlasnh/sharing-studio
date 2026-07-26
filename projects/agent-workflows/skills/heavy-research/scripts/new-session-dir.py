@@ -7,15 +7,43 @@ import argparse
 from datetime import datetime
 import os
 from pathlib import Path
+import re
+import secrets
 import sys
 
 
-SHA256_RE = __import__("re").compile(r"^[0-9a-f]{64}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 def fail(message: str) -> int:
     print(f"ERROR: {message}", file=sys.stderr)
     return 1
+
+
+def rollback_created_session(session_dir: Path, research_dir: Path, state_path: Path) -> list[str]:
+    errors: list[str] = []
+    for path, operation in (
+        (state_path, "unlink"),
+        (research_dir, "rmdir"),
+        (session_dir, "rmdir"),
+    ):
+        try:
+            if operation == "unlink":
+                if path.exists() or path.is_symlink():
+                    path.unlink()
+            elif path.exists():
+                path.rmdir()
+        except OSError as exc:
+            errors.append(f"{path}: {exc}")
+    return errors
+
+
+def cleanup_temp(path: Path) -> str | None:
+    try:
+        path.unlink(missing_ok=True)
+    except OSError as exc:
+        return f"无法清理临时路径 {path}：{exc}"
+    return None
 
 
 def main() -> int:
@@ -31,7 +59,10 @@ def main() -> int:
     if workflows_dir.exists() and not workflows_dir.is_dir():
         return fail(".workflows 存在但不是目录。")
 
-    workflows_dir.mkdir(exist_ok=True)
+    try:
+        workflows_dir.mkdir(exist_ok=True)
+    except OSError as exc:
+        return fail(f"无法创建 .workflows/：{exc}")
     now = datetime.now().astimezone()
     timestamp = now.strftime("%Y-%m-%d-%H%M%S")
     suffix = 0
@@ -44,13 +75,16 @@ def main() -> int:
             break
         except FileExistsError:
             suffix += 1
+        except OSError as exc:
+            return fail(f"无法创建 session 目录：{exc}")
 
     research_dir = session_dir / "research"
-    research_dir.mkdir()
-
     state_path = research_dir / "_state.md"
-    state_path.write_text(
-        "\n".join(
+    active_session_file = workflows_dir / ".active-session"
+    active_tmp = workflows_dir / f".active-session.tmp-{os.getpid()}-{secrets.token_hex(4)}"
+    try:
+        research_dir.mkdir()
+        state_text = "\n".join(
             [
                 "# Heavy Research Session State",
                 "",
@@ -61,15 +95,25 @@ def main() -> int:
                 f"- updated_at: {now.isoformat(timespec='seconds')}",
                 "",
             ]
-        ),
-        encoding="utf-8",
-    )
+        )
+        with state_path.open("x", encoding="utf-8", newline="\n") as state_file:
+            state_file.write(state_text)
+            state_file.flush()
+            os.fsync(state_file.fileno())
 
-    resolved = session_dir.resolve()
-    active_session_file = workflows_dir / ".active-session"
-    active_tmp = workflows_dir / f".active-session.tmp-{os.getpid()}"
-    active_tmp.write_text(f"{resolved}\n", encoding="utf-8")
-    os.replace(active_tmp, active_session_file)
+        resolved = session_dir.resolve()
+        with active_tmp.open("x", encoding="utf-8", newline="\n") as active_file:
+            active_file.write(f"{resolved}\n")
+            active_file.flush()
+            os.fsync(active_file.fileno())
+        os.replace(active_tmp, active_session_file)
+    except OSError as exc:
+        temp_error = cleanup_temp(active_tmp)
+        rollback_errors = rollback_created_session(session_dir, research_dir, state_path)
+        detail = "；".join([*(rollback_errors or []), *([temp_error] if temp_error else [])])
+        if detail:
+            return fail(f"创建 session 事务失败：{exc}；回滚未完全成功：{detail}")
+        return fail(f"创建 session 事务失败，已回滚新 session：{exc}")
 
     print(f"SESSION_DIR={resolved}")
     print(f"SESSION_ID={name}")
@@ -78,4 +122,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        exit_code = main()
+    except (OSError, RuntimeError, UnicodeError) as exc:
+        exit_code = fail(f"文件系统操作失败：{exc}")
+    raise SystemExit(exit_code)

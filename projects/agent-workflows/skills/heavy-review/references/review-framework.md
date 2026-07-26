@@ -1,107 +1,86 @@
 # Review Framework — 审查领域知识
 
-main agent 在 R2.1 阶段读取此文件，用于生成审查清单。subagent 不读此文件。
+main agent 在 R2.1 读取本文件；subagent 不直接读取。目标是把 plan snapshot 中的声明变成可机械绑定的 checklist，而不是复制不可信 Markdown 到父契约控制字段。
 
----
+## 七元组 checklist
 
-## 审查清单生成规则
-
-扫读 deployment-plan.md，把每个章节的每条声明拆解为五元组：
+每项必须包含：
 
 ```
-(plan_section, statement, evidence_route, risk_dimensions, risk_hint)
+(statement_summary, statement_sha256, plan_locator,
+ evidence_route, risk_dimensions, risk_hint, evidence_freshness)
 ```
 
-**生成步骤**：
-1. 按 plan 章节逐条枚举声明（statement）
-2. 为每条声明标注适合的取证路线（见下方取证路线判定规则）
-3. 为每条声明标注一个或多个风险语义维度（见下方 5+1 个审查维度）
-4. 为每条声明标注风险提示：HIGH-candidate / normal。风险提示只表示“需要更深证据链”，不等于最终 severity
-5. 不预打 severity，由 subagent 回填 PASS/FAIL/UNVERIFIABLE、证据和建议修复；main agent 在 R3 综合阶段按三轴规则统一判定 severity
+生成规则：
 
-每个输出到 `_run.md` 的审查项必须使用以下可机械解析格式，供 `route_items` 校验和 R3 聚合读取：
+1. 从 `review/plan-snapshot.md` 按章节逐条枚举真实声明。
+2. `statement_summary` 只做 1-240 字符安全单行描述，不以 Markdown heading 或 `- field:` 开头。
+3. 真实声明使用 `plan_locator: lines N-M`；hash 为这些行保留原换行后的精确 bytes。缺失章节、H1/章节重复等结构问题、provenance/source 状态使用 Skill 规定的 `synthetic:missing-section:*` / `synthetic:plan-structure:*` / `synthetic:provenance:*` / `synthetic:source-snapshot:*`，hash 为 locator UTF-8 bytes。
+4. 用 `hash-plan-locator.py` 计算 hash。
+5. 标注路线、风险维度、风险提示和证据时效性。
+6. 编号必须从 #1 连续递增且唯一；至少一项。
 
-```markdown
-### 审查项 #N
-- statement: <plan 中被审查的原始声明或缺失章节描述>
-- evidence_route: 源码
-- risk_dimensions: 跨章节一致性
-- risk_hint: normal
-```
+## 路线判定
 
-上方代码块里的 `源码` / `跨章节一致性` / `normal` 只是示例值，生成每个 item 时必须替换成该 item 的真实字段值。`evidence_route` 只能写 `联网`、`源码`、`都需要` 三者之一；`risk_hint` 只能写 `HIGH-candidate` 或 `normal`。`risk_dimensions` 必须写一个或多个真实维度，多个维度用逗号分隔。不要用自由文本替代字段名，否则父级无法机械验证路线分配。
+- 版本、API、URL、公开兼容性、弃用/安全公告：`联网`
+- 当前文件路径、调用链、命令与仓库状态、备份/回滚对账、plan 跨章节：`源码`
+- 同时依赖公开事实和当前本地实现：`都需要`
+- Research provenance 非 confirmed：增加源码路线 synthetic item，审查 plan 是否把来源不明内容误当事实。
+- source snapshot unverifiable：增加源码路线 synthetic item，并让所有依赖当前本地状态的 item 无法 PASS。
+- plan H1 缺失/重复、必需章节缺失/重复：为每个结构问题增加 validator 指定的源码路线 `HIGH-candidate` synthetic item；不能用一个笼统 item 合并多个 mandatory locator。
 
-若 plan 可读但结构损坏、章节过少或无法拆出普通执行声明，不要返回空清单；按 heavy-research 模板的必需章节生成“章节缺失 / 章节不可审查”类审查项。只有 plan 不存在、不可读或去除空白后为空时，才停止审查。
+## 六个风险维度
 
-**取证路线判定规则**：
-- 涉及版本号 / API / URL / 官方文档锚点 → `联网`
-- 涉及文件路径 / 调用链 / 备份命令对账 / plan 跨章节一致性 → `源码`
-- 涉及二者 → `都需要`（同时派发给两个 subagent）
+| 维度 | 主要问题 |
+|------|----------|
+| 权限 | 是否声明真实权限层级、遵守最小权限、区分本地/共享/生产权限？ |
+| 回滚 | 是否有触发条件、逐步回滚、不可逆步骤的替代补救？ |
+| 数据影响 | 哪些文件/数据/外部状态变化，是否需备份，是否混淆配置/缓存/用户数据？ |
+| 依赖 | 版本、服务、API、迁移前提、上下游约束是否明确？ |
+| 顺序 | 是否存在强依赖、并发冲突、先删后备份等逆序？ |
+| 跨章节一致性 | 摘要、关键缺口、步骤、回滚、风险是否互相覆盖且无漂移？ |
 
----
+关键缺口不会因“用户接受风险”而消失；接受只允许把风险变成明确限制、前置检查、人工确认或降级步骤。
 
-## 5+1 个审查维度（横切语义标签）
+## 风险提示
 
-每条 checklist item 必须挂到以下至少一个风险语义维度：5 个主维度，外加 1 个跨章节一致性兜底维度。
+- `HIGH-candidate`：不可逆、可能数据丢失、生产/共享基础设施、Admin/root/生产凭据、强制覆盖历史或跨边界广泛影响。
+- `normal`：未命中以上特征。
 
-| 维度 | 审查问题模板 | plan 主要落点 |
-|------|------------|--------------|
-| **权限** | 是否声明所需权限层级？是否符合最小权限原则？是否区分 admin / 普通会话？ | 前置检查 |
-| **回滚** | 是否有显式回滚步骤？回滚是否定义了触发条件？不可逆步骤是否有替代补救措施？ | 回滚方案 / 执行步骤的可逆性字段 |
-| **数据影响** | 涉及哪些文件 / 数据 / 状态？是否需要预先备份？是否区分用户数据、配置、缓存？ | 执行步骤的影响范围 / 风险清单 |
-| **依赖** | 上下游服务、版本约束、第三方 API、数据迁移顺序是否声明？ | 前置检查 / 调研摘要的 CONFLICT / 关键缺口处理 |
-| **顺序** | 步骤之间是否有强依赖？是否存在反向依赖？是否有并发冲突？ | 执行步骤的步骤编号 |
+风险提示只决定证据深度，不等于最终 severity。
 
-**兜底维度**：
-- **跨章节一致性**：执行步骤的影响范围 vs 风险清单是否一致？调研摘要的 CONFLICT 是否在执行步骤中有对应处理说明？P0/P1 关键缺口（含未覆盖、仅 unverified、CONFLICT 未裁决、仅历史记忆支撑）是否在关键缺口处理、前置检查、风险清单或降级步骤中闭环？
-
-**关键缺口处理规则**：
-- 若 plan 含 `## 关键缺口处理`，必须逐条审查该章节声明，并确认每条关键缺口都落到前置检查、风险清单或降级执行步骤。
-- 若 plan 的调研摘要或正文出现 P0/P1 关键缺口、`仅 unverified`、`CONFLICT 未裁决`、`仅历史记忆支撑` 等内容，但没有对应处理章节或落点，生成 FAIL 候选审查项。
-- 不得把用户“接受风险”解释为风险消失；接受风险只允许进入 plan，仍必须有可审查的限制、补证或降级措施。
-
----
-
-## 严重度判定规则（三轴取最大值）
+## 严重度（三轴取最大）
 
 | 轴 | LOW | MED | HIGH |
 |----|-----|-----|------|
-| **可逆性** | 易可逆（编辑文件 / 新分支） | 需投入恢复（备份还原） | 不可逆（强推覆盖历史 / 删生产数据） |
-| **范围** | 单文件 / 单仓 | 多仓 / 多服务 | 跨仓 / 共享基础设施 / 生产 |
-| **权限要求** | 本地开发者 | 共享 CI | Admin / root / 生产凭证 |
+| 可逆性 | 易撤销的文档/单文件编辑 | 需要备份还原、迁移或停机窗口 | 不可逆删除、强制覆盖历史、可能永久数据丢失 |
+| 范围 | 单文件/单模块/单仓本地 | 多模块、多仓但隔离、共享开发环境 | 生产、共享基础设施、广泛跨仓或外部用户影响 |
+| 权限 | 普通本地用户 | 共享 CI/服务账户 | Admin/root/生产凭据 |
 
-**判定规则**：
-- HIGH = 任一轴落 HIGH（不可逆 OR 跨仓 OR 数据丢失 OR Admin 权限）
-- MED = 三轴均不为 HIGH，但至少一轴为 MED
-- LOW = 三轴全 LOW（文档 / 格式 / 命名风格）
+- 任一轴 HIGH → HIGH。
+- 无 HIGH、至少一轴 MED → MED。
+- 三轴 LOW → LOW。
 
-**风险提示规则（不是最终 severity）**：
-- `HIGH-candidate`：声明涉及不可逆操作、跨仓/生产/共享基础设施、Admin/root/生产凭证、数据删除或可能数据丢失。
-- `normal`：未命中上述条件。
+Git push 不能一概判 HIGH：普通可恢复分支 push 依据范围和保护策略判断；force push、覆盖受保护历史、发布敏感内容或影响生产才可能 HIGH。跨仓也不是个人目录层级的硬编码；按目标仓库和真实共享边界判断。
 
-**本仓库特别说明**：
-- "跨仓库影响" = L1（仓库内 PWF + ByteRover .brv/）/ L2（second-brain vault）/ L3（家庭图谱）任一层被触及
-- "本地可逆但 push 后不可逆"的 git push 类操作 → 直接判 HIGH
+## 证据等级到结论的映射
 
----
+| 证据等级 | 可支撑的明细状态 |
+|----------|------------------|
+| `confirmed` | PASS；或有直接反证时 FAIL |
+| `CONFLICT` | FAIL：plan 不能把矛盾事实当确定前提，修复为补证/分支/人工闸门 |
+| `MISSING` | FAIL：plan 声称必须存在的资源/路径/备份/公开锚点不存在 |
+| `unverified` | UNVERIFIABLE，不得 PASS |
+| `STALE` | 时效敏感项为 UNVERIFIABLE，需刷新证据 |
 
-## 证据级别（5 级）
+整项路线结论固定 `FAIL > UNVERIFIABLE > PASS`。PASS 必须至少有一条真实 confirmed 明细；FAIL 必须有证据和落到 plan 的修复；UNVERIFIABLE 必须写真实原因和处理要求。
 
-| 标注 | 含义 |
-|------|------|
-| `confirmed` | 联网路线：≥2 个独立来源印证；源码路线：直接本地证据已验证（如文件内容、路径状态、语法解析结果或 dry-run 输出） |
-| `unverified` | 联网路线：仅 1 个来源；源码路线：只有间接推断、未完成必要读取 / 解析 / dry-run 的证据 |
-| `CONFLICT` | 多个来源矛盾，保留全部说法不裁决 |
-| `STALE` | 来源日期 > 12 个月，时效敏感场景需重查 |
-| `MISSING` | 联网路线：联网工具可用且已实际尝试后，plan 引用的公开资源仍无法在官方或权威来源验证；源码路线：plan 声明必须存在的本地路径 / 备份产物不存在（本身即 finding） |
+## 仓库策略边界
 
----
+是否允许提交/push 某路径，按以下顺序判断：
 
-## 审查状态（三态）
+1. 当前仓库已加载的 Agent Markdown 与用户当前授权。
+2. `.gitignore`、Git tracked 状态、远端/分支保护策略。
+3. 文件是否含秘密、私有数据、本机绝对路径或不应公开的运行产物。
 
-每条 checklist item 在每条相关取证路线内最终必须是以下三态之一：
-- `PASS`：已验证，无问题
-- `FAIL`：已验证，发现问题（需给证据 + 修复建议；severity 由 main agent 在 R3 统一判定）
-- `UNVERIFIABLE`：无法验证（必须显式列出，不得隐式 PASS）
-
-每条取证路线报告必须为每个分配到本路线的 checklist item 写出一个整项 `route_conclusion`，字段值只能等于 `PASS`、`FAIL`、`UNVERIFIABLE` 三者之一。判定优先级为 `FAIL > UNVERIFIABLE > PASS`：只要该 item 有任何失败发现，整项路线结论就是 FAIL；没有失败但有任何无法验证点，整项路线结论就是 UNVERIFIABLE；只有所有相关检查点均通过时才是 PASS。
+公共 Skill 不得硬编码“所有 PWF/隐藏目录不得 push”或个人 Second Brain 层级。明确的仓库规则优先；没有规则且影响重大时标记 UNVERIFIABLE 并要求确认。

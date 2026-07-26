@@ -53,9 +53,9 @@
 - [x] 再次最细复查 heavy-research / heavy-review 逻辑边界，修复 Review 只读 Git 状态、dry-run 写入风险和 Research/Review reference 一致性问题
 - [x] 使用 goal 自我迭代复查 heavy-research / heavy-review，修复模板占位、查询模板、Linux 示例和 synthesis 输入校验问题；最后一轮未发现新增逻辑问题，已同步全局并验证通过
 - [x] 2026-07-26 完成首批状态闭环、provenance 与路径安全加固及检查点级校验，准备中间提交与 push（非最终完成）
-- [ ] 2026-07-26 以当前 worktree 为权威重新审查 heavy-research / heavy-review 的逻辑一致性、逻辑谬误和状态闭环
-- [ ] 为本轮审查补充可重复的自动化不变量与行为 smoke tests，并修复所有发现
-- [ ] 按同一标准复审至最后一轮零问题，再重新装载本机全局 Skill
+- [x] 2026-07-26 以当前 worktree 为权威重新审查 heavy-research / heavy-review 的逻辑一致性、逻辑谬误和状态闭环
+- [x] 为本轮审查补充可重复的自动化不变量与行为 smoke tests，并修复所有发现
+- [x] 按同一标准复审至最后一轮零问题，再重新装载本机全局 Skill
 - [ ] 提交并推送本轮 Heavy Workflows 优化，核验远端包含最终提交
 - [ ] 恢复 GTD Todoist skills
 - [ ] 检查 Todoist CLI/API 和 reminder-only cron

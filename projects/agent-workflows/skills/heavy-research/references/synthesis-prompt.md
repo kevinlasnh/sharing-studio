@@ -55,11 +55,15 @@
 ## 元数据
 - session_id: [[REPLACE: SESSION_ID]]
 - run_id: [[REPLACE: RUN_ID]]
+- topic_sha256: [[REPLACE: 与 research/_state.md 一致的 TOPIC_SHA256]]
 - research_run_sha256: [[REPLACE: _run.md hash]]
 - web_report_sha256: [[REPLACE: web.md hash]]
 - memory_report_sha256: [[REPLACE: memory.md hash]]
 - source_report_sha256: [[REPLACE: source.md hash；未启用时写 none]]
+- key_gap_ids: [[REPLACE: 无关键缺口写 none；否则列出全部连续唯一 #N]]
 ```
+
+`key_gap_ids` 不是主观摘要字段：逐个检查 outline 中的 P0/P1；只要任一启用维度含 `CONFLICT`，或联网/源码当前证据中没有 `confirmed`，该编号就必须进入列表。按 outline 顺序写出全部编号；`emit-plan-provenance.py` 会从各报告的小节 confidence 重新计算并拒绝漏报、增报或乱序。
 
 上方 `P0`、`P1` 都只是示例值；每个子问题标题必须替换为该子问题在 `_run.md` outline 中的真实优先级，只能写 `P0`、`P1`、`P2` 三者之一，不得保留 `P0/P1/P2` 这类斜杠枚举占位，也不得写没有优先级的 `### 子问题 N：...` 标题。
 
@@ -94,4 +98,4 @@
 
 若“关键缺口与进入 plan 条件”非空，不得使用普通的“方案合理”作为进入 D 的充分条件；必须把选项 1 改为“接受上述关键缺口并写 deployment-plan”，并在用户明确接受后才能进入阶段 D。
 
-用户批准后必须按 SKILL.md 写入绑定当前 `summary.md` hash 的 `_approval.md`；聊天中的“同意”本身不能跨中断复用。若用户认为方案不合理，回到阶段 A/B，在同一 SESSION_DIR 递增 rerun_count，生成新 run_id，并只综合新 run 报告。
+用户批准后必须按 SKILL.md 写入绑定当前 `summary.md` hash 的 `_approval.md`；聊天中的“同意”本身不能跨中断复用。若 `key_gap_ids` 非 `none`，用户必须接受该字段列出的全部缺口后才能进入 D，approval 的 `accepted_gap_ids` 必须与其精确一致。若用户认为方案不合理，回到阶段 A/B，在同一 SESSION_DIR 递增 rerun_count，生成新 run_id，并只综合新 run 报告。

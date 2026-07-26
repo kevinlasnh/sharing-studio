@@ -15,7 +15,7 @@
 <!-- README-I18N:END -->
 
 > [!NOTE]
-> 本项目只发布工作流 skills 和脱敏契约。真实项目中的 `.workflows/` session、部署计划、审查报告和本地 planning 文件都留在 Git 之外。
+> 本项目只发布工作流 skills 和脱敏契约。真实 `.workflows/` session 与私有部署证据不得发布。仓库 planning 文件是否跟踪，应依据目标仓库 Agent Markdown、`.gitignore`、敏感内容规则和用户明确授权判断，而不是套用统一的“永不提交”规则。
 
 ## 解决什么问题
 
@@ -59,7 +59,10 @@ flowchart TD
   K -->|No| L[Plan passes heavy review]
   K -->|Yes| M[User reviews fix proposal]
   M -->|Reject| H
-  M -->|Approve| N[Inline fixes into deployment-plan.md]
+  M -->|Approve| N[Transactional inline fixes]
+  N --> O[New plan/source/provenance snapshots]
+  O --> P[Full post-fix review with a new review_run_id]
+  P --> K
 ```
 
 ## 核心契约
@@ -69,8 +72,11 @@ flowchart TD
 - 调研报告绑定 `run_id`；陈旧报告会被忽略。
 - 审查报告绑定 `review_run_id` 和 `plan_sha256`；计划变更后旧报告不能复用。
 - 只有 `_run.md` 显式启用 `source` 时，才纳入源码调研。
-- 审查路线通过 `statement`、`evidence_route`、`risk_dimensions`、`risk_hint` 字段化。
+- 审查路线用 `statement_sha256` 与 `plan_locator` 把安全摘要绑定到精确 plan bytes，并附路线、风险和时效字段。
 - 审查聚合遵守 `FAIL > UNVERIFIABLE > PASS`；无法验证的工作不会被静默当作通过。
+- 综合报告、精确修复规格和用户决定都会持久化并绑定 hash。
+- `fix-state: prepared` 不代表 plan 已修改；开始 post-fix review 前必须幂等续跑事务 apply helper。
+- inline fix 不会结束工作流；修改后的 plan 必须用新 `review_run_id` 完整复审通过，fix state 才能标记 verified。
 
 ## 依赖
 
@@ -86,4 +92,4 @@ flowchart TD
 - 真实 `.workflows/` session 目录。
 - 私有项目的真实部署计划或审查报告。
 - 尚未公开的项目源码摘录。
-- 本地 planning 文件或 ByteRover context tree。
+- 本地 planning 文件或 ByteRover context tree；但若目标仓库明确要求跟踪且已通过敏感内容检查，可按仓库 policy 处理。

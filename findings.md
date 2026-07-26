@@ -202,3 +202,112 @@
 - 时间戳目录不能只靠正则判断，必须用真实日期解析并拒绝伪日期、`-0` 和非法前导零后缀；所有 helper 应共享同一语义。
 - plan 中的 Markdown 内容不能直接成为 `_run.md` 控制字段；必须编码或使用独立结构化 metadata，避免换行和伪字段注入。`unverified`、`STALE`、`CONFLICT` 等状态也不能因文件存在或字符串命中而被误判为 PASS。
 - 当前首批 helper 和 Research 契约只解决了部分底层机制；Heavy Review references、证据等级映射、web privacy/URL 边界、公共 Git/PWF policy、post-fix 复审和自动化测试仍是发布阻断项。
+
+## 2026-07-26 中间提交后契约复核发现
+
+- Heavy Review 的恢复段已经要求 checklist 七字段和完整父级元数据，但 R2.1、`_run.md` 示例、subagent prompt、`review-loop-core.md` 与 `synthesis-prompt.md` 仍只定义旧四字段；按当前文本，新建产物会被同一 Skill 的恢复校验判无效。
+- `_run.md` 新建模板缺少恢复阶段宣称必需的 `session_id`、`plan_snapshot_path`、`repo_root`、`source_snapshot_sha256`、`web_evidence_ttl_hours` 等字段，说明父契约尚未真正落地。
+- `review-framework.md` 仍把个人 Second Brain 层级当作公共“跨仓库”定义，并把所有 Git push 直接判 HIGH；`subagent-source.md` 仍一概禁止 PWF/隐藏目录 push，与目标仓库 policy 冲突。
+- `synthesis-prompt.md` 与报告模板尚未把 `CONFLICT` / `STALE` / `MISSING` / `unverified` 明确映射到 FAIL 或 UNVERIFIABLE；仅检查证据级别字符串合法，仍可能让非 confirmed 证据支撑 PASS。
+- R3 综合结果只输出 terminal，用户批准也未持久化；而新增 inline-fix helper 要求 `review/_approval.md` 和 `review_summary_sha256`，主流程尚未说明如何生成、校验和恢复这些文件。
+- R4 主文档与 `fix-edit-pattern.md` 仍要求逐次 Edit 并在完成后直接宣称可部署，没有调用新增事务 helper，也没有强制创建新 review run 做 post-fix 全量复审。
+- Research `find-latest-session.py` 会跟随 `.active-session` symlink，fallback 成功后不修复 active pointer；`update-session-state.py` 未验证 topic hash 格式或 phase 转移；`emit-plan-provenance.py` 尚未绑定 `_state.md`、topic hash、session_id 与各报告元数据。
+
+## 2026-07-26 文件真源重构决策
+
+- 中断恢复不再尝试混用“单条合法旧报告 + 单条补跑报告”；只要完整 bundle 未通过 validator，就用新 review id 全量重跑。该选择增加少量成本，但消除了半轮证据组合和恢复分支爆炸。
+- checklist 不再把 plan 原文复制进 `_run.md` 控制字段；改用安全摘要 + `lines N-M`/synthetic locator + 精确 bytes hash。这样 subagent 仍可从只读 snapshot 找回原文，同时阻断 Markdown 伪字段注入。
+- Review 的综合报告、精确替换和用户决定分别落到 `summary.md`、`fixes.json`、`_approval.md`；批准后 helper 归档旧 run、保存备份并写 prepared/applied transaction state，支持中断后的 hash 幂等恢复。
+- PASS 的机械规则收紧为只接受 confirmed；CONFLICT/MISSING 只能支撑 FAIL，unverified/STALE 只能支撑 UNVERIFIABLE。文件存在、字符串命中或非 confirmed 证据不再可能静默通过。
+- 普通 Git push 的严重度不能预设为 HIGH；应按强推/保护历史、可逆性、共享或生产范围、敏感内容和仓库明确 policy 逐案判定。
+
+## 2026-07-26 第二轮机械闭环复核
+
+- Research 目前只校验 `summary.md` 自报的 `key_gap_ids` 格式与编号范围，没有从各启用维度报告的 P0/P1 confidence 机械反推关键缺口；因此摘要仍可把真实 `unverified` / `CONFLICT` / 仅记忆支撑项谎报为 `none`。
+- `prepare-review-run.py` 会归档任何通过 `--require-summary` 的 changes-required bundle，即使 `_approval.md` 尚未记录用户决定；这允许新 run 绕过 R3 的持久化批准/拒绝关口。
+- `apply-inline-fixes.py` 的幂等提前返回发生在 session 时间戳语义校验之前，且未限定 plan 文件名；伪 session 名或同目录其他文件可能进入事务恢复分支。
+- `validate-review-run.py` 只抽取合法的 `状态：PASS|FAIL|UNVERIFIABLE`，会忽略同一审查项中的额外非法状态行；`route_items` 也只取首个匹配 block，重复父级控制块没有被显式拒绝。
+- `new-session-dir.py` 在 `.active-session` 原子替换失败时会留下可被 fallback 恢复的孤儿 `in_progress` session；创建事务必须在指针失败时回滚自身创建的空 session，并返回明确错误。
+
+## 2026-07-26 第三轮 Research 静态复审
+
+- `find-latest-session.py` 的 state 恢复只检查 `status != complete`，没有校验 phase 是否属于 B0-D，也没有校验唯一、带时区的 `updated_at`；损坏 state 仍可能被自动恢复。
+- Research 多个 helper 只拒绝最终文件本身是 symlink，却没有拒绝 `research/` 父目录 symlink；`_state.md`、报告、summary 和 approval 可能经父目录跳到 session 外，违背仓库边界。
+- `update-session-state.py` 把 absolute active pointer 描述成 canonical，但没有要求原字符串等于 resolve 后路径；完成阶段的 pointer 删除与临时文件清理也缺少受控错误返回。
+- `new-session-dir.py` 的 finally 对异常临时路径直接 `unlink()`，若同名路径被竞争替换成目录会再次抛错并遮蔽原始回滚结果；创建 research/state 失败的错误文案也被误称为 active pointer 失败。
+- `validate-deployment-plan.py` 未限定文件名必须为 `deployment-plan.md`，回滚表只按集合比较而不拒绝重复步骤行，也未机械要求 `⚠️ 不可逆` 与“不可逆步骤的回滚方案”内容一致。
+
+## 2026-07-26 第三轮 Review helper 静态复审
+
+- `capture-plan.py` 未限定输入文件名，且可在已有 `_run.md` 时覆盖当前 plan snapshot；直接调用可能让一个正在使用的 review run 失效。
+- `capture-source-snapshot.py` 只 hash 文件内容与粗粒度类型；可执行位变更和 submodule/index 状态等 Git-visible 变化可能不改变 snapshot hash，需要绑定稳定的 porcelain/index 状态。
+- `prepare-review-run.py` 以字符串包含判断 fix-state waiting，未拒绝非文件 fix-state；invalid bundle 的“已归档”捷径只看 run_id/manifest 存在，不比较当前文件 hash，可能直接删除与历史内容不同的当前 bundle。
+- `archive-review-run.py` 先算 manifest 后重新读取文件写归档，存在 TOCTOU；已有 history target 只比较 manifest JSON，不复核归档文件真实 hash，tamper 后仍可能返回 already-archived。
+- `mark-fix-verified.py` 没有机械要求当前 PASS run 的 mode 为 post-fix，也没有完整验证 fix-state 的 session/hash/路径/timestamp schema，可能把错误父状态标为 verified。
+- 多个 review 写入 helper 的临时文件 finally 直接 unlink，目录竞争会遮蔽原错误；`record-review-decision.py` 的 summary 读取和 archive 后续失败也缺少完整受控错误闭环。
+- `field()` 对任何包含三个点的单行值都判模板残留，与文档只禁止“独占行省略号”不一致，会误拒绝合法主题、原因或路径文本。
+
+## 2026-07-26 第三轮 Review validator / 事务复审
+
+- `_run.md` 可以绑定手工伪造的 `provenance.json`；validator 目前只核对 JSON status/hash，没有重新运行只读 provenance verifier，因此 fabricated `confirmed` 可绕过 Research 链路。
+- source snapshot 为 `unverifiable` 时 validator 不要求当前 helper 结果仍为 unverifiable，也没有机械要求 checklist 包含 `synthetic:source-snapshot:unverifiable`；provenance 非 confirmed 和必需 plan 章节缺失同样只靠文字要求，checklist 可省略后全 PASS。
+- 报告证据等级按整个 item body 汇总，FAIL 可以借用 PASS 小节的 confirmed 证据通过；validator 没有要求 FAIL/UNVERIFIABLE/PASS 状态位于对应小节并具有问题/建议、原因/处理、检查点/证据等完整字段。
+- `summary.md` 目前只校验元数据，不校验 HIGH/MED/LOW、通过项、无法验证项、修复方案等正文结构及 item 覆盖；空正文加正确 hash 仍可通过。
+- `fixes.json` 只要求 `new` 含 `[REVIEW-FIX]`，没有要求写出其 `item_ids` 来源编号；与 synthesis 文档的可追溯要求不一致。
+- `apply-inline-fixes.py` 用 `mkstemp` 候选替换 plan 时没有保留原文件 mode，会把原 plan 权限机械改成临时文件权限；幂等提前返回也未验证 backup/archive/timestamp/approved ids 完整性。
+- 多轮 post-fix 再修复会覆盖单一 `fix-state.md`，而 history archive 不包含旧 fix-state；上一轮事务状态缺少独立持久化记录，审计链不完整。
+
+## 2026-07-26 接续后的文档契约复核
+
+- Research 的 `validate-deployment-plan.py` 已机械要求固定文件名、唯一 H1、非空成功标准、四类唯一前置检查、逐步骤字段、回滚表顺序/唯一性、不可逆补救一致性，以及权限/数据影响/依赖版本三类基础风险；主 Skill 仍只笼统写“必需章节、字段值、模板标记和 provenance”，代码与文档契约尚未完全同步。
+- `find-latest-session.py` 当前 active pointer 路线要求 absolute path，但没有像 `update-session-state.py` 那样验证原字符串等于 resolve 后 canonical path；绝对但含 `..` 等非 canonical 表达仍可能被恢复。恢复指针的 canonical 不变量尚未在所有 helper 中闭合。
+- Review 恢复把 `fix-state status: prepared` 与“plan 已应用、等待 post-fix”混为一谈；prepared 可能表示备份/state 已写但 plan 仍是 base hash，此时直接 `prepare-review-run --mode post-fix` 会审查旧 plan。恢复必须先幂等重跑 `apply-inline-fixes.py`，把状态推进到 `applied-awaiting-post-fix-review`。
+- `prepare-review-run.py` 目前只校验 fix-state 的 status，没有验证 session/review/hash、archive manifest、backup、approval hash 与 timestamp 完整 schema；损坏 state 可能错误决定下一轮 mode。三个事务 helper 需要共享同一只读 fix-state contract，避免各自漂移。
+- `validate-review-run.py` 的 summary 正文只确认预期编号“至少出现”，没有拒绝额外编号、重复编号或把同一 FAIL 同时归入多个严重度；报告明细也可在同一个小节内跨多条状态借用 detail。正文分类和每条状态明细仍需一一绑定。
+
+## 2026-07-26 第四轮剩余 helper 静态复审
+
+- `prepare-review-run.py` 先把 invalid bundle 全部移动到 orphan 目录，再创建 `validation-error.txt`；若错误说明写入失败，helper 返回失败但当前 bundle 已被移走，缺少回滚或“先写说明再移动”的事务顺序。
+- `verify-plan-provenance.py` 只在调用 Research provenance generator 前读取 live plan 与 snapshot；generator 运行期间若 plan/snapshot 漂移，仍可能输出 `confirmed`。应在生成后重读并确认两个 hash 仍等于 expected，再持久化结果。
+- `hash-plan-locator.py` 等小 helper 对输入先 `resolve()`，随后再检查 `review_dir.is_symlink()` / `session_dir.is_symlink()`；resolved 对象已无法反映原始父路径是否为 symlink。需要在 resolve 前检查 lexical session/review 父级，或明确只接受 canonical 输入并机械拒绝别名路径。
+- `new-review-run-id.py` 遇到 symlink `_run.md` 时会把它当作“无当前 run”而继续生成 ID；虽然 prepare 主流程会先退休 invalid bundle，helper 独立调用时仍应拒绝可疑父状态，避免生成与未解析当前 run 冲突的标识。
+- `heavy-review/references/subagent-source.md` 只描述 source snapshot 非 confirmed 时的判定闸门，没有说明 snapshot 实际绑定 Git HEAD/porcelain、tracked 与未忽略 untracked 的内容、文件类型和可执行位；与主 `SKILL.md` 的机械契约不完整同步。
+- 双语 README 已有 post-fix 回环，但核心契约未提示 `fix-state status: prepared` 不能直接开始 review、必须幂等续跑 apply helper；作为工作流总览容易把 prepared 误解成已应用状态。
+- `validate-deployment-plan.py` 在验证 `research/` 是 session 内真实目录之前先用 `Path.read_text()` 读取 `research/summary.md`，会跟随 summary 或父目录 symlink；边界检查顺序应前移，并统一使用 no-follow 普通文件读取。
+- deployment-plan validator 在第一次 plan 稳定性复核后才运行第二次 provenance generator，但第二次 generator 返回后未再读取 plan；plan 若在末次 provenance 复核期间漂移，仍可能返回成功。最终返回前必须同时再确认 plan bytes 与两次 provenance 输出稳定。
+- `fix_state_contract.py` 尚未从 archived `plan-snapshot.md` 与 `fixes.json` 顺序重放 replacements，也未把 state 的 `candidate_plan_sha256`、`applied_replacements`、`approved_item_ids` 与 archived approval/fixes 机械对账。若 state candidate hash 与 live plan 被一起篡改，`apply-inline-fixes.py` 的幂等分支可能误报 already-applied。
+- `validate-review-run.py` 把固定的 `session/deployment-plan.md` 和 `review/plan-snapshot.md` 先 `resolve()` 再 no-follow 读取；原路径若是指向 session 外的 symlink，resolved 目标会失去 symlink 证据，并可被伪造 `_run.md` canonical path 绑定。必须直接校验固定 lexical 路径为普通文件，不能先跟随 symlink。
+- Review validator 先验证 `web.md` / `source.md`，随后又重新读取当前文件计算 summary hash；若文件在两次读取之间变化，summary 可能绑定未被验证的新 bytes。summary/fixes 与 PASS mark/decision 也缺少由 validator 返回的精确已验证 hash，存在 TOCTOU。应让 validator 对单次读取数据完成验证/聚合/hash，并在返回前做稳定性复核。
+- `capture-source-snapshot.py` 对普通 tracked/untracked 文件已绑定内容、类型和可执行位，但 tracked gitlink/submodule 只会被当成目录类型；submodule 已 dirty 后，内部内容继续变化时顶层 porcelain 状态可能仍相同，snapshot hash 不一定变化。clean submodule 应绑定 index object 与实际 HEAD；dirty、缺失或无法检查的 submodule 应降级为 unverifiable。
+
+## 2026-07-26 第五轮修复后复审
+
+- 26 项行为回归、19 个 helper 内存 compile、`pyflakes` 与 `git diff --check` 均通过。
+- 少数边缘 helper 仍保留“先检查 `is_symlink()`，再调用 `Path.read_text()` / `read_bytes()`”的两步读取；检查与打开之间可被替换，和主契约的 `O_NOFOLLOW` 普通文件读取语义不一致。应统一替换为共享/本地 no-follow reader。
+- `fix_state_contract.py` 的 `verified` 分支只验证 `post_fix_review_run_id` / `post_fix_summary_sha256` 格式，尚未从当前根 bundle 或 `review/history/<post_fix_run_id>/` 证明该 run 是 mode=post-fix、审查 candidate hash 且 summary verdict=pass；手工把 applied state 改写为 verified 可能被接受。
+- Heavy Review 的 legacy 判定只看 `research/` 或 `_state.md` 是否缺失；一个已经带现代 `## Workflow Provenance`、但 state 被删除的损坏 session 也会被当作 legacy。只有缺 state 且 plan 不含 provenance 章节的旧格式才能机械认定为 legacy。
+
+## 2026-07-26 第六轮特殊文件边界复审
+
+- 28 项行为回归和 19 个 helper 内存 compile 已通过，新增的现代 provenance plan 缺 state 拒绝用例正常通过。
+- 纯未跟踪 FIFO 不会被 `git ls-files --others --exclude-standard` 枚举，不会进入 source snapshot；但已跟踪普通文件被 FIFO 替换后仍位于 index 路径集合，Git porcelain 会报告工作区修改，而当前 `capture-source-snapshot.py` 仅按特殊节点类型生成 payload 并错误返回 `confirmed`。
+- FIFO、socket、block/character device 等特殊节点没有可稳定、非阻塞读取的源码内容；只绑定节点类型不足以证明当前可审查源码状态。任何 Git-visible 路径解析为此类节点时，source snapshot 应降级为 `unverifiable`，并由既有 synthetic item 闸门禁止相关源码项 PASS。
+- `find-latest-plan.py` 在候选扫描后重新调用 `state_kind(latest)` 但不检查结果；若 state 在两次读取间漂移，helper 可返回成功却输出 `SESSION_STATE=None`，首次扫描后出现的更晚 complete session 也可能被漏选。发现阶段应对“最新 canonical session + state kind”做有界双扫描稳定性确认；plan bytes 仍由紧随其后的 `capture-plan.py` 作为最终信任边界。
+- `verify-plan-provenance.py` 对 `--research-script` 先调用 `resolve()` 再检查 `is_symlink()`，因此最终脚本 symlink 会被静默跟随，检查永远无法看到原始路径证据。应先检查 lexical 路径，再解析并要求目标为普通文件；生产 validator 仍使用仓库内固定 Research helper 路径。
+- `find-latest-session.py` 的 fallback 与 Review discovery 有同类漂移窗口：单次扫描后直接把 latest 写回 `.active-session`，未证明候选在选择/写指针期间仍是同主题 `in_progress` session。应双扫描稳定候选，并在原子写回后复核 pointer 与 session；若失效则只清理自己刚写入且仍匹配的 pointer 后失败。
+- fix-state 内容/hash/schema 已对齐，但时间审计仍只验证各字段可解析，并仅约束 `verified_at >= applied_at`；尚未机械证明 `summary.summarized_at <= approval.approved_at <= prepared/applied_at <= post-fix summary.summarized_at <= verified_at`。倒序时间不会伪造内容，却会形成自相矛盾的审计链，应由共享契约拒绝。
+- Review validator 虽在最外层捕获 `ContractError/OSError/UnicodeError`，但对 `provenance.json` 的 `json.loads` 结果未先要求 object 就直接 `.get()`；合法 JSON array/string 会触发未捕获 `AttributeError` 和 traceback。所有外部/文件 JSON 在字段访问前都必须机械校验顶层 shape。
+- Review 证据时间只对 time-sensitive Web 做 TTL/future 检查；`created_at`、stable Web、source route 和 summary 仅验证可解析。这样旧报告可伪装成本轮产物，summary 也可早于报告或位于未来。机械时间链应为 `source snapshot <= run created_at <= web/source evidence_captured_at <= summary.summarized_at <= validation now`，time-sensitive Web 另受 TTL 上限约束。
+- `capture-source-snapshot.py` 在 Linux 上把 Git 路径中的字面 `\` 替换成 `/`；根目录 Git-visible 文件 `.workflows\visible.txt` 因而被误判为 `.workflows/` 内文件并排除。隔离复现中 Git 能枚举该文件，但 snapshot `file_count` 未包含它且内容变化 hash 不变。Ubuntu/Linux helper 必须保留 Git 返回的 POSIX 路径原文，只排除真实 `.workflows` 与 `.workflows/` 前缀。
+- 12 个 no-follow reader 使用 `O_RDONLY | O_NOFOLLOW`；若目标在检查与 `open()` 间被替换成 FIFO，Linux 的只读 FIFO open 可永久等待 writer，`fstat` 永远无法执行。统一增加 `O_NONBLOCK` 对普通文件无行为影响，却能让 FIFO/特殊节点立即进入类型拒绝路径。
+- `archive-review-run.py` 只用 `target.exists()` 判断 history run 是否占用；悬空 symlink 返回 false，最终 `os.rename(temp_dir, target)` 会替换该 symlink。`new-review-run-id.py` 也会把 broken symlink 当成可用 ID。所有审计目标必须用 `exists() or is_symlink()` 占用语义，发现 symlink 后拒绝而非覆盖。
+- 写入异常仍有未收口路径：`capture-plan.py` 的 snapshot `open/replace`、`ensure-review-dir.py` 的 `mkdir()` 可直接抛 OSError traceback；多个 `finally` 中的 unguarded temp unlink/rmtree 还可能遮蔽原始写入错误。所有 helper 必须把预期文件系统失败转换为受控错误，并让 cleanup 错误作为附加信息而非新 traceback。
+
+## 2026-07-26 第七轮最终复审结论
+
+- 已完成写入异常收口：snapshot、pointer、state、approval、archive、backup 和 candidate plan 的写入失败均走受控错误；cleanup 失败作为附加诊断，不再覆盖原始异常。
+- `record-review-decision.py` / `archive-review-run.py` 已补 lexical session symlink 拒绝；CLI 外围路径解析、Git 探测和 helper 子进程启动失败也不会产生 traceback。
+- valid review bundle 清理中断后，只要完整 history 仍可信，prepare 可以用 manifest 精确验证当前剩余文件并幂等完成退休；`_run.md` 最后删除，保证失败重试仍能定位 run identity。
+- history 可信性不能只验证 manifest 已列文件的 hash；目录中额外注入文件同样构成篡改。archive、prepare、base fix-state 和 post-fix verified binding 已统一要求目录项与 manifest 精确相等。
+- 自动化回归最终为 37/37 pass，仓库源两个 Skill 均通过 quick_validate，19 个 helper 内存 compile、pyflakes 与 `git diff --check` 均通过。
+- 最后一轮按相同标准扫描未发现新的逻辑问题、逻辑谬误或状态闭环缺口；下一信任边界是本机重新装载后的源/安装一致性与远端 commit 核验。

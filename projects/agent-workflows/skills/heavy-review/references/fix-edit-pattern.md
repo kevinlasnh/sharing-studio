@@ -1,67 +1,49 @@
-# Inline 修复 deployment-plan.md 的规范
+# Inline Fix 事务与 post-fix 闭环
 
-用户确认修复方案合理后，main agent 用 Edit 工具直接修改 `<PLAN_PATH>`。
+本流程不让 main agent 直接做多次自由 Edit。修复规格、用户批准、备份、替换和验证都必须文件化。
 
----
+## 入口条件
 
-## 核心原则
+1. 当前 `summary.md` 已通过 `validate-review-run.py --require-summary`，verdict 为 changes-required。
+2. `fixes.json` hash 与 summary 元数据一致，覆盖全部 FAIL/UNVERIFIABLE item。
+3. 用户批准已由 `record-review-decision.py` 写入 `_approval.md`，批准 item 集合与 fixes 精确一致。
+4. live plan hash 仍等于本轮 plan hash。
 
-**不新建修复版 plan，直接 Edit 原 deployment-plan.md**。
+任一不满足都不得写 plan。
 
-理由：deployment-plan 是部署的唯一真源，修复必须落到原文，避免出现"原 plan + 修复 patch"两份脱节的文件。
+## 执行
 
-用户确认修复方案后，在任何 R4 写入前（包括写备份前），先重新计算 `<PLAN_PATH>` 当前内容 SHA-256，并与 R3 综合报告使用的 `plan_sha256` 对比。若不一致，说明 plan 已被外部修改；停止 inline 修复，回到 R1/R2 用新的 `review_run_id` 重新审查，避免把旧审查建议套到新 plan 上，也不得写入备份。
+运行：
 
-首写前 hash 一致后，把 `expected_plan_sha256` 初始化为 R3 使用的 `plan_sha256`，再把原始 plan 复制到 `<SESSION_DIR>/review/deployment-plan.before-inline-fix.md` 作为只读回滚备份。若该文件已存在，不得覆盖，改写入 `<SESSION_DIR>/review/deployment-plan.before-inline-fix.YYYY-MM-DD-HHmmss.md`，同时保留已有备份。该备份写入是 R4 阶段除修改 deployment-plan.md 外唯一允许的额外写入；这不影响 R2 取证阶段按输出契约写入 review 报告。备份只用于撤销 inline 修改，不是新的执行真源，不得在后续部署中引用。
-
-后续每次 Edit 前，都重新计算 `<PLAN_PATH>` 当前 hash，并只与 `expected_plan_sha256` 对比；不再拿 R3 的原始 hash 反复比较。若不一致，说明发生了本流程之外的外部修改，必须停止剩余 Edit 并向用户报告。每次成功 Edit 后，立即重新计算 plan hash 并更新 `expected_plan_sha256`，让本流程自己的上一处修改成为下一处修改的合法基线。
-
----
-
-## 修复落点的对应关系
-
-每条修复必须落到 plan 的某个章节：
-
-| 修复类型 | 落点章节 |
-|---------|---------|
-| 缺少环境检查 | `## 前置检查` |
-| 步骤遗漏 | `## 执行步骤`（在对应步骤前后插入） |
-| 步骤不可逆但无回滚 | `## 回滚方案`（补充替代措施） |
-| 未识别的风险 | `## 风险清单`（新增行） |
-| 调研摘要中 CONFLICT 未处理 | `## 执行步骤`（增加处理说明） |
-| 步骤可逆性标注错误 | 修改对应步骤的 `**可逆性**` 字段 |
-
----
-
-## 修复标注
-
-每条修复在 plan 中插入时，用引用块标注修复来源，便于追溯：
-
-```markdown
-### 步骤 2：<操作名>
-- **操作**：...
-- **影响范围**：...
-- **可逆性**：可逆
-
-> [REVIEW-FIX] 增加前置确认 <项> 已生效。来源：审查项 #N（联网取证路线）
+```bash
+python3 ~/.agents/skills/heavy-review/scripts/apply-inline-fixes.py "$PLAN_PATH"
 ```
 
-写入实际 plan 时，`[REVIEW-FIX]` 块和被修改章节不得保留任何尖括号占位符或省略号占位，例如 `<项>`、`<操作名>`、`<...>`、`...`；未知内容必须写成带原因的人工确认、前置检查或风险项。
+helper 会：
 
----
+- 再次验证 review bundle、summary、fixes 和 approval。
+- 把当前 run 归档到 `review/history/<review_run_id>/`。
+- 获取 no-follow 文件锁。
+- 创建不覆盖的 `deployment-plan.before-inline-fix*.md` 备份。
+- 保留原 plan 文件 mode。
+- 写 `fix-state.md status: prepared`，绑定 base/candidate hash、summary/fixes、`review_approval_sha256`、批准项、归档和备份路径。
+- 原子替换 plan。
+- 写 `status: applied-awaiting-post-fix-review`。
 
-## Edit 操作的颗粒度
+中断时重跑 helper：
 
-- 一次 Edit 只改一处，避免一次性大改导致冲突
-- 修改前先 Read 一次确认 plan 当前状态
-- 修改后向用户简短报告："已修复 N 处，详情见 <PLAN_PATH>"
+- live hash 等于 base → 可从 prepared state 继续。
+- live hash 等于 candidate → 幂等认定已应用并修复 state。
+- 其他 hash → 停止，报告外部修改冲突。
+- `prepare-review-run.py` 看到 prepared state 会拒绝开始 post-fix；必须先重跑本 helper，直到 state 为 `applied-awaiting-post-fix-review`。
+- 每次开始不同 `review_run_id` 的新修复事务前，旧 `fix-state.md` 原文写入 `review/fix-history/<旧 review_run_id>.md`；同名历史内容不同则停止，不能覆盖审计链。
+- 共享 state contract 机械要求时间线单调：initial summary 不晚于 approval，approval 不晚于 prepared/applied，applied 不晚于 post-fix summary，post-fix summary 不晚于 verified。
 
----
+## post-fix
 
-## 完成后告知
+应用成功不代表 plan 通过。立即开始 mode=`post-fix` 的全新完整 review：新 id、新 plan snapshot、新 source snapshot、新 provenance、全部适用路线重跑。
 
-修改全部完成后，输出：
+- 仍有 FAIL/UNVERIFIABLE：生成新 fixes，重新请求批准。
+- 全 PASS：运行 `mark-fix-verified.py SESSION_DIR`，将 fix-state 绑定到 post-fix review run 和 summary hash。
 
-> 修复已 inline 进 <PLAN_PATH>，共 N 处。可以基于此版本部署。
-
-任务结束。
+只有 `fix-state status: verified` 才能声称“当前修改后的 plan 已通过 Heavy Review”。仍然不能声称部署已执行。

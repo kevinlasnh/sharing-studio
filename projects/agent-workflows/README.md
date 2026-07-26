@@ -15,7 +15,7 @@ Heavy research and review skills for deployment plans that need evidence, tracea
 <!-- README-I18N:END -->
 
 > [!NOTE]
-> This project publishes the workflow skills and redacted contracts only. Runtime `.workflows/` sessions, deployment plans from real projects, review reports, and local planning files stay outside Git.
+> This project publishes the workflow skills and redacted contracts only. Real `.workflows/` sessions and private deployment evidence must not be published. Repository planning files follow the target repository's Agent Markdown, `.gitignore`, sensitivity rules, and explicit user authorization rather than a universal "never commit" rule.
 
 ## What It Solves
 
@@ -59,7 +59,10 @@ flowchart TD
   K -->|No| L[Plan passes heavy review]
   K -->|Yes| M[User reviews fix proposal]
   M -->|Reject| H
-  M -->|Approve| N[Inline fixes into deployment-plan.md]
+  M -->|Approve| N[Transactional inline fixes]
+  N --> O[New plan/source/provenance snapshots]
+  O --> P[Full post-fix review with a new review_run_id]
+  P --> K
 ```
 
 ## Core Contracts
@@ -69,8 +72,11 @@ flowchart TD
 - Research reports are tied to `run_id`; stale reports are ignored.
 - Review reports are tied to `review_run_id` and `plan_sha256`; old reports cannot be reused after the plan changes.
 - Source-code research is included only when `_run.md` explicitly enables `source`.
-- Review routes are fieldized through `statement`, `evidence_route`, `risk_dimensions`, and `risk_hint`.
+- Review routes bind a safe summary to exact plan bytes through `statement_sha256` and `plan_locator`, plus route, risk, and freshness fields.
 - Review aggregation treats `FAIL > UNVERIFIABLE > PASS`; unverified work never silently passes.
+- Review summaries, exact fix specifications, and user decisions are persisted and hash-bound.
+- `fix-state: prepared` is not proof that the plan was changed; resume the transactional apply helper idempotently before any post-fix review.
+- An inline fix never ends the workflow: the modified plan must pass a new full review before the fix state becomes verified.
 
 ## Dependencies
 
@@ -86,4 +92,4 @@ Do not publish:
 - Real `.workflows/` session directories.
 - Real deployment plans or review reports from private projects.
 - Project-specific source excerpts that are not already public.
-- Local planning files or ByteRover context trees.
+- Local planning files or ByteRover context trees unless the target repository explicitly requires them to be tracked and they have passed sensitivity checks.

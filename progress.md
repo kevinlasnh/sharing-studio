@@ -477,3 +477,161 @@
   - Heavy Review 后半段 R2/R3/R4、全部 review references、双语 README 和 post-fix 自动完整复审契约仍需统一。
   - Research 文档一致性、严格时间戳校验、active pointer 恢复重写、provenance 字段校验和 plan validator 表格定位仍需补强。
   - 尚未补齐自动化不变量与行为 smoke tests，尚未同步本机全局 Skill；本次提交仅用于保存进度。
+
+### 阶段 4：中间提交后全量契约复核
+- **状态：** in_progress
+- **更新时间：** 2026-07-26 +0800
+- 执行的操作：
+  - 创建并 push 中间 commit `b0ccf3b`（`wip: checkpoint heavy workflow hardening`），核验本地 HEAD 与远端 `origin/master` 哈希一致，随后继续完整目标。
+  - 重新读取 Heavy Review 主文档、review framework、loop core、路线 references 与全部现有 helper；逐项对照恢复、新建、综合、用户批准和 inline fix 契约。
+  - 确认七字段 checklist 与旧四字段模板、完整 `_run.md` 恢复要求与残缺新建模板、事务 helper 与旧逐次 Edit 流程之间存在直接自相矛盾。
+  - 重新检查 Research session/provenance helper，确认 active pointer、phase transition、session/report metadata 和严格时间戳仍需补强。
+- 下一步：
+  - 统一改写 Review R2-R4 及全部 references，新增可机械验证的 review bundle/approval/post-fix 闭环。
+  - 同步修复 Research helper 与契约后，补齐自动化测试并开始同标准复审循环。
+
+### 阶段 4：Research/Review 文件真源与 post-fix 闭环重构
+- **状态：** in_progress
+- **更新时间：** 2026-07-26 +0800
+- 执行的操作：
+  - Research session helper 增加真实时间戳语义、active pointer symlink/多行/相对路径拒绝、fallback 原子修复、显式 phase transition 和完成时指针关闭。
+  - Research provenance 现绑定 `_state.md`、topic hash、run schema、source roots/excludes、attempts、全部启用报告 metadata/hash、summary key gaps 和用户 approval；deployment-plan validator 改为按章节解析步骤、回滚、风险表与关键缺口。
+  - Heavy Review 主 Skill 和全部 references 统一为七字段 checklist、plan/source/provenance 三重绑定、公开 Web 隐私边界、仓库 policy 驱动的 Git/PWF 判断，以及严格证据等级到 PASS/FAIL/UNVERIFIABLE 映射。
+  - 新增 review run id、locator hash、bundle validator、run 准备/归档、用户决定记录、事务 inline fix 和 post-fix verified helper。
+  - R3 现在持久化 `summary.md` 与精确 `fixes.json`；R4 只通过批准/hash 绑定的事务 helper 修改 plan，之后强制新 `review_run_id` 全量复审。
+  - 双语 README 已补 post-fix 回环，并移除“所有 planning 文件永不进入 Git”的通用硬编码。
+- 当前验证：
+  - 两份 Skill `quick_validate.py`：pass。
+  - 当前 18 个 Python helper 内存 `compile()`：pass。
+  - `git diff --check`：pass。
+- 下一步：
+  - 新增自动化行为测试，先用测试暴露 helper 边界错误，再继续同标准静态/动态复审。
+
+### 自动化测试首轮
+- **状态：** in_progress
+- 新增 `projects/agent-workflows/tests/test_workflow_contracts.py`，覆盖并发 session、active lifecycle、伪日期/symlink、Research provenance 篡改、plan/source snapshot 漂移、证据状态误判、事务 inline fix 与 post-fix verified。
+- 首轮 `unittest`：7 项中 6 项通过；唯一错误是静态契约测试文件漏写 `import re`，触发 `NameError`，不涉及生产 helper。已补 import，准备重跑。
+- 第二轮：6 项行为测试继续通过；静态测试把跨 Skill 依赖 `emit-plan-provenance.py` 错当作 Heavy Review 本地脚本，断言范围过窄。已改为同时校验 Review 本地 scripts 与明确的 Research 配套 scripts。
+
+### 第二轮机械闭环修复与回归
+- **状态：** in_progress
+- **更新时间：** 2026-07-26 +0800
+- 执行的操作：
+  - `emit-plan-provenance.py` 现在从 web/memory/source 报告逐项提取 confidence，按 P0/P1 规则机械反推关键缺口，并要求 `summary.md key_gap_ids` 精确一致。
+  - `prepare-review-run.py` 现在在归档 changes-required bundle 前校验 `_approval.md` 与当前 summary/hash/全部 actionable item 的绑定，禁止绕过用户决定直接开新 run。
+  - `apply-inline-fixes.py` 在任何幂等恢复前验证真实 session 时间戳、固定 `deployment-plan.md` 文件名和真实 fix-state；同时补充 state 的 session 绑定。
+  - `validate-review-run.py` 拒绝额外非法 `状态：...` 值，并要求 `_run.md` 只能出现一个 `route_items` web/source block。
+  - `new-session-dir.py` 在 active pointer 原子写入失败时回滚本次创建的 state/research/session，避免留下可被 fallback 误恢复的孤儿 session。
+  - 测试从 7 项扩展到 11 项，新增关键缺口反推、未记录决定、非法状态、重复 route block、伪 session 幂等路径和 active pointer 回滚覆盖。
+- 验证：
+  - `python3 -m unittest discover -s projects/agent-workflows/tests -v`：11/11 pass。
+- 遇到的问题：
+  - 新增 active pointer 回滚测试首次把测试预置的非法日期目录也纳入“新建 session”集合，导致 1 个测试断言失败；已把断言改为核对目录集合只保留预置目录和阻断指针，复跑 11/11 pass。生产 helper 未出现失败。
+- 下一步：
+  - 按同一标准完整静态/动态复审全部主文档、references、helper 与测试；发现问题继续修复，直至最后一轮零问题。
+
+### 第三轮静态复审修复与会话恢复检查点
+- **状态：** in_progress
+- **更新时间：** 2026-07-26 +0800
+- 执行的操作：
+  - 完成 Research helper 的 phase/timestamp/state 恢复、父目录 symlink、active pointer 事务清理与 deployment-plan 结构校验加固。
+  - 完成 Review provenance 重验证、Git-visible source snapshot、mandatory synthetic items、按小节证据映射、summary 正文覆盖、fix 来源编号、双重稳定归档、plan mode 保留、approval hash、完整 fix-state 与 `fix-history/` 加固。
+  - 测试扩展至 17 项；上一轮结果为 16/17，唯一失败是测试断言文字与受控错误文案不完全一致，生产 helper 未失败；断言已收窄为稳定语义片段，等待复跑。
+  - 本次接续重新归一化仓库路径，完整读取 `planning-with-files-zh` / `skill-creator`、PWF 三件套并运行 `session-catchup.py`；未发现未同步会话，当前 worktree 差异与记录一致。
+- 下一步：
+  - 复跑 17 项测试，随后同步 Research/Review 文档契约并继续逐 helper 静态复审与边界测试。
+- 遇到的问题：
+  - 接续后首次复跑仍为 16/17：断言错误地要求“不是”和“真实”连续出现，而实际受控文案为“不是当前只读 verifier 的真实输出”。已改为匹配更精确且稳定的 `不是当前只读 verifier`；生产 helper 行为符合预期。
+- 验证：
+  - 修正测试契约后复跑 `python3 -m unittest discover -s projects/agent-workflows/tests -v`：17/17 pass。
+
+### 第四轮共享状态契约与证据归属加固
+- **状态：** in_progress
+- **更新时间：** 2026-07-26 17:53 +0800
+- 执行的操作：
+  - `find-latest-session.py` 拒绝绝对但非 canonical 的 active pointer；Research deployment-plan/provenance 在校验结束前执行双重稳定性复核。
+  - 新增 Heavy Review 共享只读契约 `fix_state_contract.py`，由 apply、prepare 和 verified helper 统一验证 session/review ID、全部 hash、archive manifest/真实归档文件、backup、approval hash、状态时间及 post-fix 字段。
+  - 明确 `prepared` 只表示事务已准备，恢复时必须幂等重跑 `apply-inline-fixes.py`，只有 `applied-awaiting-post-fix-review` 才能启动 post-fix review。
+  - source snapshot 绑定 Git porcelain、HEAD、文件内容、类型与可执行位；summary 分类改为精确集合覆盖，每条 PASS/FAIL/UNVERIFIABLE 明细必须在自身状态块内具备完整证据字段。
+  - inline fix 的临时候选清理不再让目录竞争遮蔽原始错误；连续多轮修复通过 `fix-history/` 保留旧事务状态。
+  - 同步更新 Research/Review 主文档与 references，补充 plan 结构、provenance、source snapshot、prepared 恢复、approval hash、fix 来源编号和审计历史契约。
+- 验证：
+  - 测试扩展至 21 项，新增非 canonical pointer、未跟踪文件可执行位漂移、prepared 恢复、篡改 fix-state/archive binding、summary 额外分类、同小节跨状态借证和连续两轮 fix-history 覆盖。
+  - `python3 -m unittest discover -s projects/agent-workflows/tests -v`：21/21 pass。
+- 下一步：
+  - 完成剩余 helper 与双语文档的逐文件静态复审；发现问题继续修复并补回归，直到最后一轮零问题。
+
+### 第五轮路径、稳定性与事务语义修复
+- **状态：** in_progress
+- **更新时间：** 2026-07-26 +0800
+- 执行的操作：
+  - 修复 invalid review bundle 的 orphan 顺序：先持久化 validation error，再移动文件；任一步失败都清理说明/空目录，已移动文件由 helper 回滚。
+  - Review plan/snapshot/locator helper 改为直接校验固定 lexical 普通文件与父目录，不再先跟随 symlink 后丢失原路径证据；可疑 `_run.md` 不再被 run-id generator 静默忽略。
+  - provenance verifier 增加两次 Research generator 一致性和末端 live plan/snapshot bytes 复核；deployment-plan validator 前移 research 父目录检查，并在最终 provenance 复核后再次确认 plan 稳定。
+  - fix-state 共享契约开始从 archived base plan 顺序重放 fixes，并对账 approval、summary、批准编号、replacement 数量与 candidate hash。
+  - Review validator 使用同一次已验证报告 bytes 计算 summary 绑定，返回 `summary_sha256`，末端复核 bundle 文件、source snapshot 与 provenance；decision/verified helper 使用该 hash 并二次验证。
+  - source snapshot 增加 Git index entry 绑定；clean submodule 要求 index gitlink 等于实际 HEAD 且 worktree clean，dirty/缺失 submodule 降级为 unverifiable。
+  - 同步补充 source reference 与双语 README 的 snapshot / prepared 恢复契约。
+- 遇到的问题：
+  - 首次修改 `capture-plan.py` 条件表达式时漏写一个 `or`；读取变更片段立即发现并修复，随后 19 个 helper 内存 `compile()` 全部通过，未执行到该错误版本。
+- 验证：
+  - 既有完整回归 `python3 -m unittest discover -s projects/agent-workflows/tests -v`：21/21 pass（60.646 秒）。
+- 下一步：
+  - 为本轮新增不变量补行为测试，再继续第二次同标准静态复审。
+
+### 第六轮回归与特殊文件边界复审
+- **状态：** in_progress
+- **更新时间：** 2026-07-26 +0800
+- 执行的操作：
+  - 按 PWF 恢复流程重新读取三件套并运行 `session-catchup.py`；未发现额外未同步上下文。
+  - 19 个 Heavy Research / Heavy Review helper 通过内存 `compile()`。
+  - 完整行为回归扩展至 28 项，`python3 -m unittest discover -s projects/agent-workflows/tests -v`：28/28 pass（75.740 秒）。
+  - 使用隔离临时 Git 仓库验证特殊文件枚举：纯未跟踪 FIFO 不会进入 `git ls-files --others`；已跟踪普通文件被 FIFO 替换后仍进入 snapshot 路径，当前 helper 错误返回 `confirmed`。
+  - 审查 `find-latest-plan.py`，确认候选选中后 state 漂移可能导致成功输出 `SESSION_STATE=None`，且单次扫描无法证明“最新候选”稳定。
+  - 全 helper 静态扫描通过 pyflakes，生产脚本无直接 `Path.read_text/read_bytes`、裸 `except` 或 traceback 路径；发现 provenance verifier 的脚本参数仍存在先 `resolve()` 后丢失 symlink 证据的问题。
+  - 继续复核 Research session helper，确认 fallback 会在单次扫描后直接修复 active pointer，缺少候选稳定性与写后复核。
+  - 对照 apply/prepare/verified 与共享 `fix_state_contract.py` 的字段集，未发现字段缺失或 post-fix hash 漂移；发现 summary/approval/apply/post-fix/verified 时间顺序尚未机械校验。
+  - 首次时间线修复补丁因错误假定测试方法末尾的精确上下文而验证失败，`apply_patch` 整体未应用、无部分文件修改；改为拆分生产代码与测试补丁。
+  - 复核 validator 最外层异常收口时发现：合法但非 object 的 `provenance.json` 会在 `.get()` 处漏出 `AttributeError` traceback；开始全脚本 JSON shape 扫描。
+  - 首次跨 7 个脚本的 JSON object parser 批量补丁因 `prepare-review-run.py` import context 假定错误而整体验证失败，未产生部分修改；后续改为逐文件小补丁并即时编译。
+  - JSON 非 object 回归首次插入又因假定了既有断言文案而 context 失败，测试文件未修改；改用相邻方法定义边界定位插入。
+  - JSON object parser 改造后 20 个 Python 文件内存 compile 通过；pyflakes 唯一报错是 `prepare-review-run.py` 遗留未使用 `json` import，已定位为机械清理项。
+  - JSON shape 5 项定向回归通过；继续复核时间语义，发现 run/report/summary 之间缺少单调顺序和通用未来时间拒绝。
+  - 时间线 4 项定向回归通过；隔离仓库复现 source snapshot 的反斜杠路径漏绑定：`.workflows\visible.txt` 被 Git 枚举但未进入 hash，内容变化不改变 snapshot。
+  - 盘点 12 个生产 no-follow reader，确认纯 `O_RDONLY` 在普通文件竞态替换为 FIFO 时可能阻塞；准备统一加入 `O_NONBLOCK`。
+  - nonblocking reader 动态测试通过；新增静态守卫误匹配 `apply-inline-fixes.py` 的 `O_CREAT | O_RDWR` 锁文件 open，导致 1 项测试失败。生产逻辑无失败，守卫改为只匹配 `O_RDONLY + O_NOFOLLOW`。
+  - ID/归档并发复核发现 history broken symlink 会被 archive rename 覆盖，新 ID generator 也未把它视为占用；inline-fix lock 还缺少 fd 普通文件类型确认。
+  - 全 `exists()` 与 cleanup 分支扫描发现 capture-plan snapshot 写入、ensure-review-dir mkdir 及多处 finally cleanup 仍可能漏出或遮蔽 OSError traceback；进入写入 helper 故障收口。
+  - 首次定向 compile/test 命令把 workdir 设为 `tests/` 却继续使用仓库根相对路径，测试启动前触发 `FileNotFoundError`；未执行生产代码、未产生文件，后续改为从仓库根配合 `PYTHONPATH` 运行。
+  - 本次 resume 的改动前全量回归在 `test_fix_state_rejects_reversed_audit_timestamps` 失败：测试把 post-fix summary 时间改到 2000 年，先触发 validator 的 evidence 时间链拒绝，因而无法到达原断言期待的 mark-helper 文案；另一个全量测试进程仍在后台运行，已按精确 PID 终止且确认无残留进程。后续将夹具改为断言稳定的不变量语义，并为写入/清理异常补独立故障注入测试。
+- 下一步：
+  - 已开始将 Git-visible FIFO/socket/device 等特殊节点降级为 `unverifiable`；继续为 latest-plan 双扫描稳定性补实现与回归，随后进入最终静态复审。
+
+### 第七轮写入异常收口与最终零问题复审
+- **状态：** complete
+- **更新时间：** 2026-07-26 +0800
+- 执行的操作：
+  - 将 Git-visible 特殊节点统一降级为 `unverifiable`，保留 Linux 字面反斜杠 Git 路径，并为 12 个 no-follow reader 加入 `O_NONBLOCK`。
+  - Research/Review latest discovery 使用有界双扫描；Research fallback pointer 写回后再次验证，失效时只清理自身仍匹配的 pointer。
+  - 收紧 provenance script lexical symlink、fix-state 全时间链、JSON object shape、evidence 时间链、broken history symlink 和 inline-fix lock 普通文件契约。
+  - 为所有写入 helper 收口 `mkdir/open/replace/subprocess` 的预期环境错误；临时文件/目录清理失败会追加到原始错误，不再从 `finally` 遮蔽主错误或输出 traceback。
+  - `record-review-decision.py` 与 `archive-review-run.py` 在 `resolve()` 前拒绝 session symlink；prepare 可依据完整 history 幂等退休部分清理的 root bundle，并把 `_run.md` 最后删除以保留重试 identity。
+  - history archive、prepare 与共享 fix-state 契约现在要求目录项精确等于 `manifest.json + manifest.files`，额外注入文件也视为篡改。
+  - 测试从 28 项扩展到 37 项，新增特殊文件、反斜杠路径、双扫描漂移、JSON shape、时间倒序/未来时间、broken history symlink、组合写入/清理故障、只读目录、session symlink、部分归档恢复和额外 history 文件覆盖。
+- 验证：
+  - 最终完整回归 `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s projects/agent-workflows/tests -v`：37/37 pass（92.255 秒）。
+  - 19 个生产 helper 内存 compile：pass；`pyflakes`：pass；`git diff --check`：pass。
+  - 仓库源 `heavy-research` / `heavy-review` 的 `quick_validate.py`：2/2 pass。
+  - 最后一轮同标准静态复审未发现新增逻辑问题：无临时文件 unguarded cleanup、直接 `Path.read_text/read_bytes`、裸 `except`、JSON shape 漏口或已知旧闭环残留。
+- 遇到的问题：
+  - 改动前全量测试的时间链断言期待不可达的 mark-helper 文案，实际先被更早的 evidence 时间链正确拒绝；已改为断言稳定的 `summarized_at` 不变量且明确无 traceback。
+  - 一次并行收尾检查的 JavaScript 包装器因字符串转义语法错误在执行前失败；未运行 shell 命令、未修改文件，随后改用简单输出包装完成检查。
+  - 首个全量测试调用因轮询方式不当留下后台进程；已按精确 PID 终止并确认无残留，后续全部长测试均使用 session id 轮询到明确 exit code。
+- 清理：
+  - 删除 `projects/agent-workflows/tests/__pycache__/` 与 `projects/agent-workflows/skills/heavy-review/scripts/__pycache__/` 两个测试缓存目录。
+- 本机重新装载：
+  - 使用 `rsync -a --delete` 将仓库 `heavy-research` / `heavy-review` 同步到 `/home/kevinlasnh/.agents/skills/`。
+  - 检查确认 Claude Code 两个安装路径原先不存在且无冲突后，创建 symlink 指向对应 `.agents` 实体目录。
+  - 两个源/安装目录 `diff -qr` 无差异；全局 quick_validate 2/2 pass；安装副本 19/19 helper 内存 compile；无 `__pycache__` / `.pyc`。
+- 下一步：
+  - 审查提交边界与敏感信息，提交、push 并核验远端 commit。
