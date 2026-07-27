@@ -318,5 +318,6 @@
 - 已使用受控 `rsync --delete` 将两个仓库源目录同步到 Codex 全局实体目录；随后新建 Claude Code 全局 symlink，分别指向对应的 `.agents` 实体目录。两端共用同一份可验证内容，避免后续双副本漂移。
 - 验收结果：完整 `unittest` 工作流契约回归 37/37 通过；源目录与安装目录的 `quick_validate.py` 共 4/4 通过；两个源/安装目录 `diff -qr` 无差异；安装 helper 内存编译通过，未产生 `__pycache__` / `.pyc`；`git diff --check` 通过。
 - Codex `debug prompt-input` 已列出两个 Skill 并指向 `~/.agents/skills` 当前文件；真实只读精确触发探针进入 Heavy Research 阶段 A，正确要求调研澄清和可写工作区，未启动联网或写入。Claude Code 能沿 symlink 读取两份 `SKILL.md`，其正常 TTY 界面接受 `/heavy-research` Slash Skill；非交互模式的 Slash 调用不稳定，不作为功能失败判据。
-- `tvly --status` 显示已通过 API key 认证，满足 Heavy Research 的 approved web-search fallback。当前 `brv` CLI 不在本机；该 Skill 的 memory reference 已明确定义此时跳过 ByteRover 查询、仍读取 `findings.md` 的安全降级，因此不阻断主要研究/审查流程。
+- `tvly --status` 显示已通过 API key 认证，满足 Heavy Research 的 approved web-search fallback。初检时 `brv` CLI 不在本机；后续已从 npm 恢复历史一致的 `byterover-cli` 3.16.1，并用官方 SHA-256 已验证的用户级 Node 24.13.1 专用 wrapper 运行。`brv --version`、`brv query --help` 和 `brv status` 均通过；当前仓库的 context tree 仍未初始化，未在本轮越权初始化它。
+- npm 安装 `byterover-cli` 时报告 35 个依赖漏洞（18 low、5 moderate、12 high）；未运行可能改变依赖树的 `npm audit fix`，应在独立的依赖维护任务中评估升级路径。
 - 首次记录进度提交因本仓与全局都未配置 Git 作者身份而被 Git 拒绝，未生成 commit。核对最近五个提交后确认它们均使用 `kevinlasnh <kevinlasnh@users.noreply.github.com>`，已仅在当前仓库恢复同一身份后重试。

@@ -658,6 +658,20 @@
   - 安装副本 19 个 helper 内存编译：pass；无 `__pycache__` / `.pyc`；`git diff --check`：pass。
   - Codex 模型可见 Skill 清单已列出两个 Skill；`tvly --status`：authenticated。
 - 运行时说明：
-  - 当前机器没有 `brv` CLI；memory 维度按 Skill 的既有降级契约跳过 ByteRover 查询、保留 `findings.md` 读取，不阻断主流程。
+  - 初检时当前机器没有 `brv` CLI；在后续运行时恢复前，memory 维度会按 Skill 的既有降级契约跳过 ByteRover 查询、保留 `findings.md` 读取，不阻断主流程。
   - 已删除临时 Claude Code 探针目录，且按精确 PID 终止测试会话后确认没有残留 Claude 进程。
   - 首次 Git commit 因当前仓库和全局均缺少作者身份被拒绝，未生成提交；核对历史五个 commit 后仅在本仓设置既有的 `kevinlasnh <kevinlasnh@users.noreply.github.com>` 身份，准备重试。
+
+### 阶段 4：Heavy Research ByteRover 查询运行时恢复
+- **状态：** complete
+- **更新时间：** 2026-07-27 11:13:48 +0800
+- 执行的操作：
+  - 确认 `byterover-cli` 3.16.1 仍可从 npm registry 获取，版本与历史本机安装一致。
+  - 初次用户级 npm 安装发现系统 Node 12.22.9 低于 CLI 要求的 Node 20+，导致 `brv` 入口在 ESM `await` 处失败。
+  - 下载 Node 24.13.1 官方 Linux archive，使用同版本官方 `SHASUMS256.txt` 校验通过后解包到用户级目录；创建专用 `~/.local/bin/brv` wrapper，使其只用新 Node 执行 ByteRover，不替换系统 Node。
+- 验证：
+  - `brv --version`：`byterover-cli/3.16.1 linux-x64 node-v24.13.1`。
+  - `brv query --help`：query 子命令和只读接口可用。
+  - `brv status`：CLI 正常识别当前仓库；Account/Context Tree 均未连接或初始化，按既有仓库计划保持不变。
+- 注意：
+  - npm 安装报告 35 个传递依赖漏洞（18 low、5 moderate、12 high）；本轮不执行 `npm audit fix` 或其他可能改变依赖树的操作。
