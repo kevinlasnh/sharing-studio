@@ -640,3 +640,24 @@
   - 创建功能提交 `e503e7c`（`feat: harden heavy workflow contracts`），并成功 push `master`。
   - `git rev-parse HEAD` 与 `git ls-remote origin refs/heads/master` 均为 `e503e7ce8cad0e3a2d6b23c3405ea0562f037999`，确认远端包含完整功能提交。
   - Heavy Research / Heavy Review 本轮优化、零问题复审、本机重新装载和功能提交/push 已完成；后续阶段 4 只剩独立的 GTD Todoist 恢复事项。
+
+## 会话：2026-07-27
+
+### 阶段 4：Heavy Workflows 双宿主重新部署与验证
+- **状态：** complete
+- **更新时间：** 2026-07-27 11:00:48 +0800
+- 执行的操作：
+  - 以当前仓库源为权威重新审计 `heavy-research` / `heavy-review`；确认 Codex 全局副本过期、Claude Code 两个全局 symlink 缺失。
+  - 将两个 Skill 完整同步到 `/home/kevinlasnh/.agents/skills/`，并创建 `/home/kevinlasnh/.claude/skills/` 到这些实体目录的 symlink。
+  - 在只读模式实际触发 Codex 的 `准备开始进行 Heavy Research`，确认它读取当前新安装的 `SKILL.md`、进入阶段 A、要求澄清和写入权限，未创建 `.workflows/` 或执行调研。
+  - 用 Claude Code 正常 TTY 入口确认 `/heavy-research` Slash Skill 被识别；用于自动化的非交互 Slash 调用存在 CLI 行为不稳定，因此已在无项目文件的临时目录中受限测试并清理，未将其视为安装内容缺失。
+- 验证：
+  - `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s projects/agent-workflows/tests -v`：37/37 pass（62.101 秒）。
+  - 源目录与安装目录 `quick_validate.py`：4/4 `Skill is valid!`。
+  - 源目录与 Codex 安装目录 `diff -qr`：无差异；Claude Code 两个 symlink 均解析到对应 Codex 实体目录。
+  - 安装副本 19 个 helper 内存编译：pass；无 `__pycache__` / `.pyc`；`git diff --check`：pass。
+  - Codex 模型可见 Skill 清单已列出两个 Skill；`tvly --status`：authenticated。
+- 运行时说明：
+  - 当前机器没有 `brv` CLI；memory 维度按 Skill 的既有降级契约跳过 ByteRover 查询、保留 `findings.md` 读取，不阻断主流程。
+  - 已删除临时 Claude Code 探针目录，且按精确 PID 终止测试会话后确认没有残留 Claude 进程。
+  - 首次 Git commit 因当前仓库和全局均缺少作者身份被拒绝，未生成提交；核对历史五个 commit 后仅在本仓设置既有的 `kevinlasnh <kevinlasnh@users.noreply.github.com>` 身份，准备重试。

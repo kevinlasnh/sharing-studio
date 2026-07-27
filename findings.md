@@ -311,3 +311,12 @@
 - history 可信性不能只验证 manifest 已列文件的 hash；目录中额外注入文件同样构成篡改。archive、prepare、base fix-state 和 post-fix verified binding 已统一要求目录项与 manifest 精确相等。
 - 自动化回归最终为 37/37 pass，仓库源两个 Skill 均通过 quick_validate，19 个 helper 内存 compile、pyflakes 与 `git diff --check` 均通过。
 - 最后一轮按相同标准扫描未发现新的逻辑问题、逻辑谬误或状态闭环缺口；下一信任边界是本机重新装载后的源/安装一致性与远端 commit 核验。
+
+## 2026-07-27 Heavy Workflows 双宿主重新部署与验收
+
+- 当前状态审计发现 Codex 的 `~/.agents/skills/heavy-research` / `heavy-review` 均为过期副本，缺少多项当前生产 helper；Claude Code 的两个全局路径也均不存在。仓库源 `projects/agent-workflows/skills/` 为当前权威版本。
+- 已使用受控 `rsync --delete` 将两个仓库源目录同步到 Codex 全局实体目录；随后新建 Claude Code 全局 symlink，分别指向对应的 `.agents` 实体目录。两端共用同一份可验证内容，避免后续双副本漂移。
+- 验收结果：完整 `unittest` 工作流契约回归 37/37 通过；源目录与安装目录的 `quick_validate.py` 共 4/4 通过；两个源/安装目录 `diff -qr` 无差异；安装 helper 内存编译通过，未产生 `__pycache__` / `.pyc`；`git diff --check` 通过。
+- Codex `debug prompt-input` 已列出两个 Skill 并指向 `~/.agents/skills` 当前文件；真实只读精确触发探针进入 Heavy Research 阶段 A，正确要求调研澄清和可写工作区，未启动联网或写入。Claude Code 能沿 symlink 读取两份 `SKILL.md`，其正常 TTY 界面接受 `/heavy-research` Slash Skill；非交互模式的 Slash 调用不稳定，不作为功能失败判据。
+- `tvly --status` 显示已通过 API key 认证，满足 Heavy Research 的 approved web-search fallback。当前 `brv` CLI 不在本机；该 Skill 的 memory reference 已明确定义此时跳过 ByteRover 查询、仍读取 `findings.md` 的安全降级，因此不阻断主要研究/审查流程。
+- 首次记录进度提交因本仓与全局都未配置 Git 作者身份而被 Git 拒绝，未生成 commit。核对最近五个提交后确认它们均使用 `kevinlasnh <kevinlasnh@users.noreply.github.com>`，已仅在当前仓库恢复同一身份后重试。

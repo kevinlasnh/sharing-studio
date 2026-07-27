@@ -57,6 +57,7 @@
 - [x] 为本轮审查补充可重复的自动化不变量与行为 smoke tests，并修复所有发现
 - [x] 按同一标准复审至最后一轮零问题，再重新装载本机全局 Skill
 - [x] 提交并推送本轮 Heavy Workflows 优化，核验远端包含最终提交
+- [x] 2026-07-27 重新部署并双宿主验证 heavy-research / heavy-review：Codex 实体目录已同步到当前仓库源，Claude Code 全局 symlink 已恢复；37 项工作流回归、四次 Skill 格式校验、双宿主发现和安装一致性检查均通过
 - [ ] 恢复 GTD Todoist skills
 - [ ] 检查 Todoist CLI/API 和 reminder-only cron
 - [ ] 运行 health check
