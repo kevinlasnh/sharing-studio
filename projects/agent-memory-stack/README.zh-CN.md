@@ -4,7 +4,7 @@
 
 <p>
   <img alt="Layer L1" src="https://img.shields.io/badge/layer-L1-0f766e?style=flat-square">
-  <img alt="Cross runtime" src="https://img.shields.io/badge/runtime-Claude%20Code%20%7C%20Codex%20%7C%20Gemini-2563eb?style=flat-square">
+  <img alt="Cross runtime" src="https://img.shields.io/badge/runtime-Claude%20Code%20%7C%20Codex-2563eb?style=flat-square">
   <img alt="Publish safe" src="https://img.shields.io/badge/publish-redacted-7c3aed?style=flat-square">
 </p>
 
@@ -19,7 +19,7 @@
 
 ## 解决什么问题
 
-AI 编程 agent 会在 session 结束后丢失上下文。这个脚手架让 Claude Code、Codex 和 Gemini CLI 共享同一套运行模型，用于短期任务衔接和长期仓库知识沉淀。
+AI 编程 agent 会在 session 结束后丢失上下文。这个脚手架让 Claude Code 和 Codex 共享同一套运行模型，用于短期任务衔接和长期仓库知识沉淀。
 
 ## 包含内容
 
@@ -28,24 +28,23 @@ agent-memory-stack/
 └── global/
     ├── CLAUDE.md                    # Claude Code global router
     ├── AGENTS.md                    # Codex global router
-    ├── GEMINI.md                    # Gemini CLI global router
     └── claude-settings.example.json # Claude Code SessionStart hook example
 ```
 
-三份 router 文件正文保持一致，只使用不同的宿主专属 H1 标题。
+两份 router 文件（`CLAUDE.md` / `AGENTS.md`）内容完全一致，H1 统一为 `# Global Agent Markdown`。
 
 ## 记忆模型
 
 | 层级 | 目的 | 存储位置 |
 | :--- | :--- | :--- |
-| L1-1 | 当前 session 上下文 | 运行时上下文窗口 |
-| L1-2 | 任务状态和 session handoff | `task_plan.md`, `progress.md`, `findings.md` |
-| L1-3 | 持久仓库决策和发现 | ByteRover `.brv/context-tree/` |
+| L1 | 当前 session 上下文 | 运行时上下文窗口 |
+| L2 | 任务状态和 session handoff | `task_plan.md`, `progress.md`, `findings.md` |
+| L3 | 持久仓库决策和发现 | ByteRover `.brv/context-tree/` |
 
 ```mermaid
 flowchart TD
-  A[L1-1 context window] --> B[L1-2 planning files]
-  B --> C[L1-3 ByteRover knowledge]
+  A[L1 context window] --> B[L2 planning files]
+  B --> C[L3 ByteRover knowledge]
   C --> D[Future sessions]
   D --> B
 ```
@@ -60,9 +59,6 @@ Copy-Item .\global\CLAUDE.md $HOME\.claude\CLAUDE.md
 
 # Codex
 Copy-Item .\global\AGENTS.md $HOME\.codex\AGENTS.md
-
-# Gemini CLI
-Copy-Item .\global\GEMINI.md $HOME\.gemini\GEMINI.md
 ```
 
 对于 Claude Code，合并真实 settings 前先审查 `global/claude-settings.example.json` 里的 SessionStart hook。

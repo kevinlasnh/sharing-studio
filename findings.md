@@ -321,3 +321,10 @@
 - `tvly --status` 显示已通过 API key 认证，满足 Heavy Research 的 approved web-search fallback。初检时 `brv` CLI 不在本机；后续已从 npm 恢复历史一致的 `byterover-cli` 3.16.1，并用官方 SHA-256 已验证的用户级 Node 24.13.1 专用 wrapper 运行。`brv --version`、`brv query --help` 和 `brv status` 均通过；当前仓库的 context tree 仍未初始化，未在本轮越权初始化它。
 - npm 安装 `byterover-cli` 时报告 35 个依赖漏洞（18 low、5 moderate、12 high）；未运行可能改变依赖树的 `npm audit fix`，应在独立的依赖维护任务中评估升级路径。
 - 首次记录进度提交因本仓与全局都未配置 Git 作者身份而被 Git 拒绝，未生成 commit。核对最近五个提交后确认它们均使用 `kevinlasnh <kevinlasnh@users.noreply.github.com>`，已仅在当前仓库恢复同一身份后重试。
+
+## 2026-08-05 全局 Git 策略反转与 Personal Server Aliases 删除
+
+- 全局 Git 默认策略由"隐藏目录默认 ignore、root agent markdown 本地维护禁止 push"反转为"仓库内所有内容默认纳入同步并可 push"。仅两类例外：(1) 特别大的文件包——先报告路径 / 大小 / 内容性质，由用户决定 Git LFS、外部存储或排除；(2) 用户手动声明不同步的文件——声明形式包括仓库根 agent markdown、仓库既有 `.gitignore` 规则或口头声明。
+- `Personal Server Aliases` 章节（外星人 / Dell G15 / Moying 84/165 车的 SSH 别名与凭据隐私条款）已从全局 agent markdown 整体删除；该内容不再出现在本机全局配置或本仓库任何文件中。注意：删除后全局规则不再显式包含"凭据不写入 agent markdown / 仓库 / PWF"条款，后续涉及凭据的操作仍应先向用户确认。
+- sharing 同步决策：`projects/agent-memory-stack/global/` 公开副本以本机全局 md 为唯一源，采用脱敏镜像（`<second-brain-path>` / `<your-username>` 占位符）；`GEMINI.md` 因全局规则不再包含 Gemini 而删除，双语 README 同步去除 Gemini 引用，记忆层级命名统一为 L1 / L2 / L3。
+- 已知漂移（本轮未处理）：`projects/sharing-studio-sync` 的 README / preflight 脚本仍按旧策略描述"拦截 PWF、root agent md、`.workflows` push"，与新的"默认可 push"策略不一致；本仓库根 `.gitignore` 也保留旧 ignore 清单（现按"手动声明例外"对待）。两者可在后续规则收口任务中统一评估。

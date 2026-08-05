@@ -4,7 +4,7 @@ Persistent memory rules for AI coding agents that need to survive beyond a singl
 
 <p>
   <img alt="Layer L1" src="https://img.shields.io/badge/layer-L1-0f766e?style=flat-square">
-  <img alt="Cross runtime" src="https://img.shields.io/badge/runtime-Claude%20Code%20%7C%20Codex%20%7C%20Gemini-2563eb?style=flat-square">
+  <img alt="Cross runtime" src="https://img.shields.io/badge/runtime-Claude%20Code%20%7C%20Codex-2563eb?style=flat-square">
   <img alt="Publish safe" src="https://img.shields.io/badge/publish-redacted-7c3aed?style=flat-square">
 </p>
 
@@ -19,7 +19,7 @@ Persistent memory rules for AI coding agents that need to survive beyond a singl
 
 ## What It Solves
 
-AI coding agents forget context when a session ends. This scaffold gives Claude Code, Codex, and Gemini CLI the same operating model for short-term task continuity and long-term repository knowledge.
+AI coding agents forget context when a session ends. This scaffold gives Claude Code and Codex the same operating model for short-term task continuity and long-term repository knowledge.
 
 ## What's Included
 
@@ -28,24 +28,23 @@ agent-memory-stack/
 └── global/
     ├── CLAUDE.md                    # Claude Code global router
     ├── AGENTS.md                    # Codex global router
-    ├── GEMINI.md                    # Gemini CLI global router
     └── claude-settings.example.json # Claude Code SessionStart hook example
 ```
 
-The three router files keep the same body text while using tool-specific H1 titles.
+The two router files (`CLAUDE.md` / `AGENTS.md`) keep identical content and share the H1 `# Global Agent Markdown`.
 
 ## Memory Model
 
 | Layer | Purpose | Backing Store |
 | :--- | :--- | :--- |
-| L1-1 | Current session context | Runtime context window |
-| L1-2 | Task state and session handoff | `task_plan.md`, `progress.md`, `findings.md` |
-| L1-3 | Durable repository decisions and findings | ByteRover `.brv/context-tree/` |
+| L1 | Current session context | Runtime context window |
+| L2 | Task state and session handoff | `task_plan.md`, `progress.md`, `findings.md` |
+| L3 | Durable repository decisions and findings | ByteRover `.brv/context-tree/` |
 
 ```mermaid
 flowchart TD
-  A[L1-1 context window] --> B[L1-2 planning files]
-  B --> C[L1-3 ByteRover knowledge]
+  A[L1 context window] --> B[L2 planning files]
+  B --> C[L3 ByteRover knowledge]
   C --> D[Future sessions]
   D --> B
 ```
@@ -60,9 +59,6 @@ Copy-Item .\global\CLAUDE.md $HOME\.claude\CLAUDE.md
 
 # Codex
 Copy-Item .\global\AGENTS.md $HOME\.codex\AGENTS.md
-
-# Gemini CLI
-Copy-Item .\global\GEMINI.md $HOME\.gemini\GEMINI.md
 ```
 
 For Claude Code, review `global/claude-settings.example.json` before merging the SessionStart hook into a real settings file.

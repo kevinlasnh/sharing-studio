@@ -675,3 +675,23 @@
   - `brv status`：CLI 正常识别当前仓库；Account/Context Tree 均未连接或初始化，按既有仓库计划保持不变。
 - 注意：
   - npm 安装报告 35 个传递依赖漏洞（18 low、5 moderate、12 high）；本轮不执行 `npm audit fix` 或其他可能改变依赖树的操作。
+
+## 会话：2026-08-05
+
+### 阶段 6：全局 agent markdown 规则调整与 sharing 同步
+- **状态：** complete
+- **更新时间：** 2026-08-05 15:16 +0800
+- 执行的操作：
+  - 修改 `~/.claude/CLAUDE.md` 与 `~/.codex/AGENTS.md`（两份保持逐字节一致）：重写 `Git Ignore Rules`——默认策略改为仓库内所有文件 / 目录默认纳入 Git 同步并可正常 `git add` / `commit` / `push`；例外一为特别大的文件包（先报告路径、大小和内容性质，由用户决定 Git LFS、外部存储或直接排除），例外二为用户手动声明不同步的文件（仓库根 agent markdown 写明、仓库 `.gitignore` 已有规则或口头声明）。
+  - 从两份全局文件中完整删除 `## Personal Server Aliases` 章节（外星人 / Dell G15 / Moying 车辆 SSH 别名及凭据隐私条款）。
+  - 以更新后的全局文件为源，重写 `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md`；按本仓库 privacy boundary 保持脱敏：Second Brain 路径 → `<second-brain-path>`，用户名 → `<your-username>`。
+  - 删除过时的 `projects/agent-memory-stack/global/GEMINI.md`（全局规则已不再包含 Gemini）。
+  - 更新 agent-memory-stack 双语 README：badge / 正文 / 目录树 / Quick Start 去除 Gemini 引用，router 描述改为两份文件内容完全一致且共用 H1 `# Global Agent Markdown`，记忆模型表与 mermaid 层级命名由 L1-1 / L1-2 / L1-3 对齐为 L1 / L2 / L3。
+- 验证：
+  - `diff ~/.claude/CLAUDE.md ~/.codex/AGENTS.md`：两份全局文件逐字节一致。
+  - 全局文件残留扫描（`Personal Server Aliases` / 外星人 / alienware / moying / 172.31.22）：无匹配。
+  - 仓库镜像两份 `diff`：逐字节一致；与本机全局文件 `diff` 仅两处脱敏占位符差异。
+  - 全仓 `.md` / `.json` 残留扫描：无任何服务器别名残留。
+- 备注：
+  - 本仓库根 `.gitignore` 的旧 ignore 清单（`/CLAUDE.md`、`/.claude/` 等）按新规则属于"用户手动声明例外"，本轮未改动。
+  - `projects/sharing-studio-sync` 的 push protection 描述仍基于旧 Git 策略（拦截 PWF / root agent md push），与新的"默认可 push"策略存在漂移，留待后续单独评估。

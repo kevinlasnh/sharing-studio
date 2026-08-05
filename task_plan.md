@@ -67,9 +67,17 @@
 ### 阶段 5：收口和同步策略
 - [x] 创建并部署 `~/.claude/CLAUDE.md`，与 `~/.codex/AGENTS.md` 按全局同步规则保持 H1 以下一致
 - [x] 调整 PWF 三件套 Git 跟踪策略：已从 `.gitignore` 放开 `task_plan.md` / `findings.md` / `progress.md`，本轮执行 `git add` / `commit` / `push`
-- [ ] 决定是否同步更新公开 `sharing-studio` scaffold
+- [x] 决定是否同步更新公开 `sharing-studio` scaffold（2026-08-05 已决定并执行：agent-memory-stack 全局 router 镜像已按新全局规则重写，见阶段 6）
 - [ ] 检查 secret/path/personal data 边界
 - **状态：** pending
+
+### 阶段 6：全局 agent markdown 规则调整与 sharing 同步
+- [x] 更新全局 `~/.claude/CLAUDE.md` / `~/.codex/AGENTS.md`：Git 默认策略改为"仓库内所有内容默认纳入同步并可 push"，例外仅限大文件包（需用户决定 LFS / 外部存储 / 排除）和用户手动声明不同步的文件
+- [x] 从两份全局文件中完整删除 `Personal Server Aliases` 章节
+- [x] 以更新后的全局文件为源重写 `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md` 脱敏镜像，删除过时的 `global/GEMINI.md`
+- [x] 更新 agent-memory-stack 双语 README：去除 Gemini 引用，记忆层级命名对齐 L1 / L2 / L3
+- [x] 记录进度、提交并 push
+- **状态：** complete
 
 ## 关键问题
 1. 是否现在就初始化当前仓库的 `.brv/context-tree/`？
@@ -86,6 +94,9 @@
 | brv provider 使用 DeepSeek，模型使用 `deepseek-v4-pro` | 用户提供 DeepSeek API key 并指定 DeepSeek v4 pro |
 | 使用 `~/.local/bin/brv` symlink 修复当前 PATH | `~/.brv-cli/bin` 已写入 shell profile，但当前 Codex 会话没有继承新 PATH |
 | 部署 `~/.claude/CLAUDE.md` 并与 `~/.codex/AGENTS.md` 同步 | 用户要求按全局同步规则部署 Claude Code 全局配置；H1 根据工具差异化，H1 以下保持一致 |
+| Git 默认策略改为全量同步可 push，例外仅大文件包与用户手动声明 | 用户 2026-08-05 明确指令；旧的"隐藏目录默认 ignore / root agent md 禁止 push"策略作废 |
+| 删除全局 `Personal Server Aliases` 章节 | 用户 2026-08-05 明确要求；服务器连接信息不再写入 agent markdown |
+| sharing 公开副本以本机全局 md 脱敏镜像为源并删除 `GEMINI.md` | 全局规则已不含 Gemini；仓库 privacy boundary 仍要求占位符脱敏 |
 
 ## 遇到的错误
 | 错误 | 尝试次数 | 解决方案 |
