@@ -4,7 +4,7 @@
 在新 Ubuntu 系统上恢复并微调个人 agent 脚手架，使 Codex、brv、PWF 和后续 Second Brain/GTD 流程能按当前系统运行。
 
 ## 当前阶段
-阶段 7
+阶段 4
 
 ## 各阶段
 
@@ -85,8 +85,8 @@
 - [x] 全面复核两份全局文件的逻辑闭环和同步一致性，发现问题则修复后重新复核
 - [x] 以复核通过的全局规则更新 `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md` 脱敏镜像
 - [x] 记录 PWF 进度
-- [ ] 提交、push 并核验远端提交
-- **状态：** in_progress
+- [x] 提交、push 并核验远端提交
+- **状态：** complete
 
 ## 关键问题
 1. 是否现在就初始化当前仓库的 `.brv/context-tree/`？
