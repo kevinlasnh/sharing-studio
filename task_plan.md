@@ -4,7 +4,7 @@
 在新 Ubuntu 系统上恢复并微调个人 agent 脚手架，使 Codex、brv、PWF 和后续 Second Brain/GTD 流程能按当前系统运行。
 
 ## 当前阶段
-阶段 4
+阶段 7
 
 ## 各阶段
 
@@ -79,6 +79,15 @@
 - [x] 记录进度、提交并 push
 - **状态：** complete
 
+### 阶段 7：联网搜索规则闭环与 sharing 同步
+- [x] 更新全局 `~/.claude/CLAUDE.md` / `~/.codex/AGENTS.md`：遇到可由公开资料验证但拿不准的问题时主动联网查询
+- [x] 明确所有联网查询必须先使用当前宿主内置 Web Search，仅在其明确不可用或实际查询无法返回有效结果时才以 `tavily-search` fallback
+- [x] 全面复核两份全局文件的逻辑闭环和同步一致性，发现问题则修复后重新复核
+- [x] 以复核通过的全局规则更新 `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md` 脱敏镜像
+- [x] 记录 PWF 进度
+- [ ] 提交、push 并核验远端提交
+- **状态：** in_progress
+
 ## 关键问题
 1. 是否现在就初始化当前仓库的 `.brv/context-tree/`？
 2. Claude Code 全局文件是否需要部署？已部署 `~/.claude/CLAUDE.md`，H1 以下与 Codex 全局规则一致。
@@ -97,6 +106,7 @@
 | Git 默认策略改为全量同步可 push，例外仅大文件包与用户手动声明 | 用户 2026-08-05 明确指令；旧的"隐藏目录默认 ignore / root agent md 禁止 push"策略作废 |
 | 删除全局 `Personal Server Aliases` 章节 | 用户 2026-08-05 明确要求；服务器连接信息不再写入 agent markdown |
 | sharing 公开副本以本机全局 md 脱敏镜像为源并删除 `GEMINI.md` | 全局规则已不含 Gemini；仓库 privacy boundary 仍要求占位符脱敏 |
+| 联网查询采用“拿不准时主动查、当前宿主内置 Web Search 强制首选、Tavily 有证据才 fallback”的顺序 | 用户 2026-08-06 明确要求；同时保留本地权威状态优先和敏感内容不外传边界 |
 
 ## 遇到的错误
 | 错误 | 尝试次数 | 解决方案 |
@@ -109,6 +119,7 @@
 | `uv tool list` 显示 malformed `basic-memory` 环境 | 1 | 运行 `uv tool uninstall basic-memory` 清理 dangling environment，再重新 `uv tool install basic-memory` 成功 |
 | `second-brain-hf-backup` 首次 commit 失败：Git author identity unknown | 1 | 在 Second Brain vault 本地设置 `user.name=kevinlasnh`、`user.email=kevinlasnh@users.noreply.github.com` 后重跑 |
 | `git push hf HEAD:main` 失败：HF HTTPS credential 缺失 | 1 | 本地 commit 已创建且工作区 clean；需要用户完成 Hugging Face Git 凭据登录后重跑 push |
+| 镜像组合验证命令因包含临时文件 `rm -f` 清理被安全策略在执行前拒绝 | 1 | 未创建或修改文件；改用纯只读进程替换重新运行，同一验证通过 |
 
 ## 备注
 - 不记录任何 API key。

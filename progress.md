@@ -695,3 +695,25 @@
 - 备注：
   - 本仓库根 `.gitignore` 的旧 ignore 清单（`/CLAUDE.md`、`/.claude/` 等）按新规则属于"用户手动声明例外"，本轮未改动。
   - `projects/sharing-studio-sync` 的 push protection 描述仍基于旧 Git 策略（拦截 PWF / root agent md push），与新的"默认可 push"策略存在漂移，留待后续单独评估。
+
+## 会话：2026-08-06
+
+### 阶段 7：联网搜索规则闭环与 sharing 同步
+- **状态：** in_progress
+- **更新时间：** 2026-08-06 16:59:59 +0800
+- 执行的操作：
+  - 修改全局 `~/.claude/CLAUDE.md` 与 `~/.codex/AGENTS.md`，两份保持逐字节一致。
+  - 将原先宽泛的 Web Search 条目拆为两条闭环规则：遇到可由公开资料验证但自己拿不准的问题时主动联网查询；任何联网查询强制先使用当前宿主内置 Web Search，只有内置工具明确不可用或已经实际调用但无法返回有效结果时，才允许使用 `tavily-search` fallback。
+  - 明确不得因方便、习惯或预期效果直接从 Tavily 开始；切换 fallback 时须向用户说明内置工具不可用或结果无效的具体原因。
+  - 保留本地权威证据和隐私边界：本地文件、运行状态与用户私有信息以本地证据为准，不向搜索服务提交敏感内容。
+  - 第一轮完整通读发现 Second Brain Path Guard 先去尾斜杠、后与带尾斜杠根路径比较，根目录本身无法命中；已改为“等于无尾斜杠根路径，或以根路径加 `/` 为前缀”，并重新完成全文件审查。
+  - 使用复审通过的全局规则更新 `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md`；公开镜像继续使用 `<second-brain-path>` 和 `<your-username>` 脱敏，并为路径占位符补充无尾斜杠约束。
+- 验证：
+  - 两份全局文件 `cmp`：一致；SHA-256 均为 `20adf45e8a52bb6754017d3aab67b06ff50f6e5ac5cb5faace7fe08ba05a8471`；UTF-8 + LF；最终规则契约审查 `PASS`。
+  - 最终全局审查覆盖 H1、重复标题、代码围栏、主动查询触发、内置 Web Search 首选、Tavily fallback 条件、禁止直接 Tavily、fallback 原因说明、敏感内容边界和路径守卫分支；未发现剩余逻辑问题。
+  - sharing 两份镜像 `cmp`：一致；SHA-256 均为 `0c1c8d5fbdd5d3d876df554d58e9ee8393100c56ee1943c582199abf14a94f6d`；UTF-8 + LF；规则契约和隐私扫描 `PASS`。
+  - 全局源与 sharing 镜像从路径守卫下一行起，仅存在预期的用户名脱敏替换；搜索规则正文逐字一致。`git diff --check`：pass。
+- 遇到的问题：
+  - 首个镜像组合验证命令因注册临时文件 `rm -f` 清理而被安全策略在执行前拒绝；未创建或修改任何文件。随后改用纯只读进程替换，同一映射验证通过。
+- 下一步：
+  - 完成提交边界与敏感信息审查，提交、push 并核验远端 `master`。

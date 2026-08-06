@@ -2,7 +2,7 @@
 
 ## Second Brain Path Guard
 
-* Agent 开始工作前必须先归一化当前工作目录（大小写不敏感、斜杠统一、去尾斜杠）；若路径等于 `<second-brain-path>` 或位于其子目录，本文件后续的 Agent 记忆框架全部作废，只遵循该仓库根 agent markdown 和用户当前指令。
+* Agent 开始工作前必须先归一化当前工作目录（大小写不敏感、路径分隔符统一为 `/`、去除尾部 `/`），并将 `<second-brain-path>` 替换为采用相同规则归一化且不带尾部 `/` 的 vault 根路径；若归一化结果等于 `<second-brain-path>`，或以 `<second-brain-path>/` 为前缀，本文件后续的 Agent 记忆框架全部作废，只遵循该仓库根 agent markdown 和用户当前指令。
 
 ***
 
@@ -11,7 +11,8 @@
 * **Language**：始终使用中文回答。
 * **Voice aliases**：`Cloud Code` / `克劳德` / `克劳德code` = Claude Code；`Cici` / `CC` = Claude Code；`Codex` / `扣的X` = OpenAI Codex。遇到这些变体时直接按正确名称理解，不要纠正用户。
 * **Memory aliases**：`PWF` = planning-with-files；`brv` = ByteRover。
-* **Web Search**：优先使用当前宿主自身的 Web Search 工具；若宿主 Web Search 失败，自动使用 `tavily-search` Skill（`tvly search` 命令）进行 fallback。
+* **Proactive Web Search**：遇到自己拿不准、且可由公开网络资料验证的问题时，必须发挥主观能动性主动联网查询；无需等待用户明确要求，不得仅凭记忆或猜测作答。涉及当前本地文件、运行状态或用户私有信息时，仍以本地权威证据为准，不向搜索服务提交敏感内容。
+* **Web Search Tool Order**：进行任何联网查询时，必须首先使用当前宿主自身内置的 Web Search 工具。只有当内置 Web Search 明确不可用（工具不存在、无法调用或调用报错），或已经实际调用但无法返回与问题相关且足以支撑结论的有效结果时，才允许使用 `tavily-search` Skill（`tvly search` 命令）作为 fallback；不得因方便、习惯或预期效果直接从 Tavily 开始。切换 fallback 时，须向用户简要说明内置 Web Search 不可用或结果无效的具体原因。
 * **Command Formatting**：面向用户输出任何可复制执行的命令时，每条命令必须完整放在单独一行；禁止使用反斜杠续行、跨行参数或将同一条命令拆成多行，以便直接复制粘贴。
 
 ***

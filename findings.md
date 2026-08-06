@@ -328,3 +328,12 @@
 - `Personal Server Aliases` 章节（外星人 / Dell G15 / Moying 84/165 车的 SSH 别名与凭据隐私条款）已从全局 agent markdown 整体删除；该内容不再出现在本机全局配置或本仓库任何文件中。注意：删除后全局规则不再显式包含"凭据不写入 agent markdown / 仓库 / PWF"条款，后续涉及凭据的操作仍应先向用户确认。
 - sharing 同步决策：`projects/agent-memory-stack/global/` 公开副本以本机全局 md 为唯一源，采用脱敏镜像（`<second-brain-path>` / `<your-username>` 占位符）；`GEMINI.md` 因全局规则不再包含 Gemini 而删除，双语 README 同步去除 Gemini 引用，记忆层级命名统一为 L1 / L2 / L3。
 - 已知漂移（本轮未处理）：`projects/sharing-studio-sync` 的 README / preflight 脚本仍按旧策略描述"拦截 PWF、root agent md、`.workflows` push"，与新的"默认可 push"策略不一致；本仓库根 `.gitignore` 也保留旧 ignore 清单（现按"手动声明例外"对待）。两者可在后续规则收口任务中统一评估。
+
+## 2026-08-06 联网搜索规则与全局逻辑复审
+
+- 联网搜索决策闭环分为两个维度：触发条件是“遇到自己拿不准且可由公开资料验证的问题时主动查询，不等待用户另行要求”；工具顺序是“当前宿主内置 Web Search 必须先行，Tavily 只作为有失败证据的 fallback”。
+- 内置 Web Search 的 fallback 门槛已机械化为两类：工具明确不存在、无法调用或调用报错；已经实际调用，但没有返回与问题相关且足以支撑结论的有效结果。方便、习惯和预期效果不能作为直接调用 Tavily 的理由。
+- 本地文件、运行状态和用户私有信息不能由公开 Web 结果取代；搜索请求不得携带敏感内容。该边界避免“主动联网”被误解为将本地事实或私密数据外发。
+- 全文件逻辑审查发现既有 Second Brain Path Guard 存在根目录漏判：归一化步骤去除尾部 `/`，旧比较值却保留尾部 `/`。修复后使用“等于无尾斜杠根路径，或以前缀 `根路径/` 开头”，同时避免相邻同名前缀误命中。
+- `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md` 是本仓库对应的 sharing 公开镜像；它们与复审通过的全局源保持同一规则正文，只用 `<second-brain-path>` / `<your-username>` 替代本机值。
+- 最终全局与 sharing 契约审查均通过；两组内部各自逐字节一致，UTF-8 + LF，未发现重复标题、旧 Web Search 条目、直接 Tavily 路径、路径守卫缺口或公开镜像本机信息泄漏。
