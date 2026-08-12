@@ -342,3 +342,9 @@
 
 - `git pull` 返回 `Already up to date`，本地 `master` 与 `origin/master` 均为 `2d60470`，工作区 clean，无待推送内容。
 - 本轮未发现新的发现、决策或错误；PWF 三件套内容未发生实质变更，仅 `progress.md` 追加了本次例行同步检查的记录。
+
+## 2026-08-12 全局规则新增：代码修改自适应中文注释
+
+- 决策：在全局 agent markdown 的 `Interaction Defaults` 新增 `Code Comments` 规则——编写或修改代码时必须根据本次修改内容自适应添加详细中文注释（改了什么、为什么、影响范围），避免模板化或空泛注释。
+- 动因：用户人工阅读代码时需要理解 agent 每次改动的意图，仅靠英文/简短注释难以看懂。
+- 同步：新增规则同时写入本机全局 `~/.claude/CLAUDE.md` / `~/.codex/AGENTS.md` 与 sharing 镜像 `projects/agent-memory-stack/global/` 两份；本机全局与镜像仍保持仅两处脱敏占位符差异。

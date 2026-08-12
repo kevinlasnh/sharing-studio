@@ -731,3 +731,18 @@
   - 确认 PWF 三件套已在 Git 跟踪中；本轮无实质任务动作，未改动 `task_plan.md` 阶段状态。
 - 备注：
   - `task_plan.md` 关键问题第 4 条（"PWF 尚未 git add 进入 Git 跟踪"）已过时：PWF 自阶段 6/7 起已纳入 Git 跟踪并随提交推送远端。按 PWF 增量写入规则，本轮未直接改写该条目，仅在此记录，留待后续维护时修正。
+
+### 全局规则新增：代码修改自适应中文注释
+- **状态：** complete
+- **更新时间：** 2026-08-12 14:48:57 +0800
+- 执行的操作：
+  - 在全局 `~/.claude/CLAUDE.md` 与 `~/.codex/AGENTS.md` 的 `Interaction Defaults` 章节、`Command Formatting` 条目之后新增一条 `Code Comments` 规则：编写或修改代码时，必须根据本次修改的具体内容自适应的添加详细中文注释，说明改了什么、为什么这样改、影响范围是什么，确保人工阅读代码能直接看懂每次改动；注释应贴合实际改动（新增功能、逻辑变更、缺陷修复、重构调整等），不写与改动无关的模板化或空泛注释。
+  - 按全局同步规则同步更新 sharing 镜像 `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md`，新增内容与本机全局逐字一致。
+- 验证：
+  - 两份全局文件 `diff`：逐字节一致。
+  - 两份 sharing 镜像 `diff`：逐字节一致。
+  - 本机全局 vs sharing 镜像 `diff`：仍仅两处既有脱敏占位符差异（Second Brain 路径、用户名），无新增差异。
+  - 四份文件 `Code Comments` 规则各出现 1 次；全部 UTF-8 + LF。
+- 发布：
+  - 提交边界仅包含两份 sharing 镜像和 PWF 三件套，不含本机全局文件（位于仓库外）。
+  - 创建提交并 push 到 `origin/master`，核验远端 HEAD 与本地一致。
