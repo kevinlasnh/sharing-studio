@@ -337,3 +337,8 @@
 - 全文件逻辑审查发现既有 Second Brain Path Guard 存在根目录漏判：归一化步骤去除尾部 `/`，旧比较值却保留尾部 `/`。修复后使用“等于无尾斜杠根路径，或以前缀 `根路径/` 开头”，同时避免相邻同名前缀误命中。
 - `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md` 是本仓库对应的 sharing 公开镜像；它们与复审通过的全局源保持同一规则正文，只用 `<second-brain-path>` / `<your-username>` 替代本机值。
 - 最终全局与 sharing 契约审查均通过；两组内部各自逐字节一致，UTF-8 + LF，未发现重复标题、旧 Web Search 条目、直接 Tavily 路径、路径守卫缺口或公开镜像本机信息泄漏。
+
+## 2026-08-12 例行同步检查
+
+- `git pull` 返回 `Already up to date`，本地 `master` 与 `origin/master` 均为 `2d60470`，工作区 clean，无待推送内容。
+- 本轮未发现新的发现、决策或错误；PWF 三件套内容未发生实质变更，仅 `progress.md` 追加了本次例行同步检查的记录。
