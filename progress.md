@@ -46,3 +46,28 @@
   - `task_plan.md`、`progress.md`、`findings.md`
 - 下一步：
   - 完成 merge 提交并 push `origin/master`，核验远端与本地一致。
+
+### 阶段 2：上游重命名、全局规则收敛与 eco-sync 双向同步 skill
+- **状态：** in_progress
+- **更新时间：** 2026-08-16 +0800
+- 执行的操作：
+  - `gh repo rename -R kevinlasnh/sharing-studio kevin-AI-studio --yes`：GitHub 上游重命名成功，visibility 保持 PUBLIC；本地 `git remote set-url` 更新为新地址并 `git fetch` 验证。
+  - 收敛全局规则：完整 diff 确认本机版（三宿主，149 行，无 Code Comments）与仓库镜像（双宿主，150 行，有 Code Comments）共 5 处差异；以本机版为基础插入 Code Comments 行生成收敛版（150 行），写入本机三份（`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.dsh/AGENTS.md`）与仓库三份脱敏镜像（`global/CLAUDE.md`、`global/AGENTS.md`、`global/AGENTS.dsh.md`）。
+  - 更新仓库内引用：双语 README 标题改为 kevin-AI-studio、global/ 目录树与描述改为三份镜像；LICENSE 版权行改名；根 `AGENTS.md`/`CLAUDE.md` 的 global/ 描述同步为三份。
+  - 编写 `skills/eco-sync`：`SKILL.md`（生态范围、用法、agent 使用指引）与 `scripts/sync.py`（纯标准库 Python：status/push/pull 三模式；三路比较以 pull 前后两个 HEAD 渲染版为基线，判定 UNCHANGED/PUSH/PULL/CONFLICT/DELETED_*；脱敏渲染先路径后用户名；push 落盘前安全扫描；默认 dry-run；--force 解冲突；--prune 才删除）。
+  - 部署 eco-sync 到 `~/.agents/skills/`，创建 `~/.claude/skills/eco-sync` symlink；DSH 会话技能目录已出现 eco-sync。
+- 验证：
+  - 本机三份宿主规则 `cmp` 两两一致；仓库三份镜像 `cmp` 两两一致；镜像无 `kevinlasnh` / `/home/` 残留；Code Comments 规则各出现 1 次。
+  - `sync.py` py_compile 通过；status 实跑：本机值与 vault 路径从 Path Guard 行自动提取成功。
+  - 首轮 status 全量 skill 误报 PUSH，定位为 `git show` 经 `text=True` 管道被 universal newlines 转换、hash 口径与设备字节不一致；改用字节口径 `run_git_bytes` 后，status 仅剩 5 项真实差异（三份规则收敛 + eco-sync 新增），其余 10 个 skill 全部 UNCHANGED。
+- 遇到的问题：
+  - `gh repo rename` 传两个位置参数被拒（accepts at most 1 arg），改用 `-R kevinlasnh/sharing-studio` 指定仓库后成功。
+  - status 全量误报 PUSH（见上），根因是文本管道换行转换改变 hash 口径，已修复并回归验证。
+- 创建/修改的文件：
+  - `global/CLAUDE.md`、`global/AGENTS.md`（收敛重写）、`global/AGENTS.dsh.md`（新增）
+  - `skills/eco-sync/SKILL.md`、`skills/eco-sync/scripts/sync.py`（新增）
+  - `README.md`、`README.zh-CN.md`、`LICENSE`、`AGENTS.md`、`CLAUDE.md`
+  - `task_plan.md`、`progress.md`、`findings.md`
+  - 本机：`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.dsh/AGENTS.md`（收敛版）、`~/.agents/skills/eco-sync/`、`~/.claude/skills/eco-sync` symlink
+- 下一步：
+  - 提交全部改动并 push 到新远端，重命名本地目录，最终回归验证。

@@ -1,10 +1,10 @@
 # 任务计划：仓库改造为个人 AI 使用生态
 
 ## 目标
-将 sharing-studio 仓库改造为个人 AI 使用生态：收录全局 agent markdown 脱敏镜像与全部全局 agent skills，重写仓库定位文档。
+将仓库（kevin-AI-studio）维护为个人 AI 使用生态中心：收录全局 agent markdown 脱敏镜像与全部全局 agent skills，并提供 eco-sync skill 实现多设备双向同步。
 
 ## 当前阶段
-阶段 1
+阶段 2
 
 ## 各阶段
 
@@ -18,6 +18,19 @@
 - [x] 重写双语 README 为个人 AI 使用生态定位
 - [x] 清空重开 PWF 三件套
 - [ ] 清理 `.workflows/` 运行产物，全仓敏感扫描，提交并 push
+- **状态：** complete
+
+### 阶段 2：上游重命名、全局规则收敛与 eco-sync 双向同步 skill
+- [x] `gh repo rename` 把 GitHub 上游从 `sharing-studio` 重命名为 `kevin-AI-studio`，更新本地 remote URL 并验证
+- [x] 收敛全局规则为「三宿主 + Code Comments」版：本机三份（Claude / Codex / DSH）与仓库三份镜像（`global/CLAUDE.md`、`global/AGENTS.md`、`global/AGENTS.dsh.md`）各自字节一致
+- [x] 更新仓库内引用：双语 README（标题、三份镜像结构、同步模型）、LICENSE 版权行、根 `AGENTS.md`/`CLAUDE.md` 的 global/ 描述
+- [x] 编写 `skills/eco-sync`：SKILL.md + `scripts/sync.py`（status / push / pull 三模式，三路冲突检测、脱敏渲染、安全扫描、快进 pull）
+- [x] 部署 eco-sync 到 `~/.agents/skills/` 并创建 `~/.claude/skills/` symlink，宿主已识别
+- [x] 修复 hash 口径 bug（git show 用字节口径，避免 universal newlines 转换造成全量误报）
+- [x] 测试 status：仅剩本会话的 5 项真实差异，其余 skill 全部一致
+- [ ] 提交全部改动并 push 到新远端 `origin/master`
+- [ ] 重命名本地目录为 `kevin-AI-studio` 并更新 `.brv/config.json` cwd
+- [ ] 最终验证：status 全量一致 + push dry-run 无变更
 - **状态：** in_progress
 
 ## 已做决策
@@ -29,6 +42,10 @@
 | 不需要部署脚本 | 用户确认；仓库以收录为主，本机部署保持手动 |
 | PWF 收口后清空重开 | 用户确认；旧任务记录进入历史，新仓库从空白任务记忆开始 |
 | 根 `AGENTS.md` / `CLAUDE.md` 放开跟踪 | 用户确认；重写为不含本机信息的公开安全仓库规则 |
+| eco-sync 支持双向 push+pull | 用户确认；多设备间生态变动需要互通，任何设备都可先拉最新再推自己改动 |
+| 保留 Code Comments 规则并收敛为三宿主版 | 用户确认；本机三份与仓库镜像统一为「三宿主 + Code Comments」 |
+| `global/` 平铺三份镜像（含 `AGENTS.dsh.md`） | 用户确认；与设备端文件名一一对应最直观 |
+| 本地目录名一并改为 `kevin-AI-studio` | 用户确认；与上游仓库名保持一致，需同步更新 `.brv` cwd |
 
 ## 备注
 - 不记录任何 API key 或本机专属路径。
