@@ -17,4 +17,5 @@
 
 * When a global skill changes locally, update its `skills/` copy here and commit it.
 * When the global rule files change locally, update the desensitized mirrors in `global/` and commit them.
+* `skills/eco-sync/` is a repo-level sync skill: runtime copies live at `.agents/skills/eco-sync/` and `.claude/skills/eco-sync/` (untracked, byte-identical), and it only runs inside this repository.
 * Never write machine-specific paths, usernames, or credentials into tracked files.

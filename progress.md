@@ -76,3 +76,26 @@
   - 本机：`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.dsh/AGENTS.md`（收敛版）、`~/.agents/skills/eco-sync/`、`~/.claude/skills/eco-sync` symlink
 - 下一步：
   - 提交全部改动并 push 到新远端，重命名本地目录，最终回归验证。
+
+### 阶段 3：eco-sync 转为仓库级 skill
+- **状态：** complete
+- **更新时间：** 2026-08-16 +0800
+- 执行的操作：
+  - 按用户要求（只允许在 kevin-AI-studio 仓库内改动 AI 生态副本）把 eco-sync 从全局部署转为仓库级 skill。
+  - `sync.py` 移除 `--repo` 参数：`find_repo()` 改为从当前目录向上定位 git 仓库根，并验证身份（remote origin URL 含 `kevin-AI-studio` 或仓库根目录名匹配）；不在仓库内或仓库身份不符时立即拒绝退出。
+  - `SKILL.md` 重写为仓库级说明：部署位置（权威源 `skills/eco-sync/` + 两份未跟踪运行时副本）、新用法（在仓库目录内执行 `.agents/skills/eco-sync/scripts/sync.py`）、新设备 clone 后的一次性部署命令。
+  - 在仓库内创建 `.agents/skills/eco-sync`（Codex）与 `.claude/skills/eco-sync`（Claude Code）两份实体副本，与权威源逐字节一致；删除全局 `~/.agents/skills/eco-sync` 与 `~/.claude/skills/eco-sync` symlink。
+  - 修复随之暴露的设计矛盾：eco-sync 不再是设备全局 skill，却在仓库 `skills/` 同步范围内，status 会误报 DELETED_LOCAL（pull 会把它复制回设备全局、push --prune 会删权威源）；在 `compare_skills` 中用 `is_eco_sync_rel` 排除自身。
+  - 更新双语 README（skills 表格、布局树、eco-sync 仓库级部署小节）与根 `AGENTS.md`/`CLAUDE.md` 的 Sync Conventions（两份保持逐字节一致）。
+- 验证：
+  - 仓库内 `python3 .agents/skills/eco-sync/scripts/sync.py status`：输出「生态副本完全一致，没有差异」。
+  - 仓库外（`/tmp`）运行同一脚本：被拒绝退出，提示「eco-sync 是 kevin-AI-studio 仓库级 skill，请在仓库目录内运行」。
+  - 两份运行时副本与权威源 `diff -qr`：逐字节一致。
+  - 宿主全局技能目录已确认移除 eco-sync（本会话 catalog 刷新后不再包含）。
+- 创建/修改的文件：
+  - `skills/eco-sync/SKILL.md`、`skills/eco-sync/scripts/sync.py`（仓库级改造 + 自排除）
+  - `README.md`、`README.zh-CN.md`、`AGENTS.md`、`CLAUDE.md`
+  - `task_plan.md`、`progress.md`、`findings.md`
+  - 本机：新建 `.agents/skills/eco-sync`、`.claude/skills/eco-sync`（未跟踪运行时副本）；删除 `~/.agents/skills/eco-sync`、`~/.claude/skills/eco-sync`（全局部署）
+- 下一步：
+  - commit 并 push 本次仓库级改造。

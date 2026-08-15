@@ -22,3 +22,9 @@
 - eco-sync 的三路比较基线是 pull 前后的两个 HEAD：只有「设备改过 + 仓库在 pull 中也改过」才判 CONFLICT，避免单基线比较静默覆盖远端改动；删除语义默认关闭（--prune 才删），防止多设备互删。
 - Python `subprocess.run(text=True)` 会对 git show 输出做 universal newlines 转换，导致仓库侧 hash 与设备端原始字节不一致、status 全量误报 PUSH；hash 计算必须用字节口径（`stdout=PIPE` 无 text），规则文件文本渲染才用文本口径。
 - eco-sync 本机值不硬编码：从任一宿主规则文件的 Path Guard 行正则提取 vault 路径、推导用户名，公开仓库内零本机信息，同一脚本在多设备通用。
+
+## 2026-08-16 eco-sync 转仓库级
+
+- 仓库级 skill 的运行时形态：实体副本放在 `<repo>/.agents/skills/`（Codex）与 `<repo>/.claude/skills/`（Claude Code），按全局规则两份实体、不用 symlink；这两个目录被 `.gitignore` 的 `/.agents/`、`/.claude/` 规则忽略，因此运行时副本不随仓库分发，新设备 clone 后需从权威源 `skills/eco-sync/` 复制部署一次。
+- 身份验证设计：`find_repo()` 以「remote origin URL 含 kevin-AI-studio 或仓库根目录名匹配」为通过条件，remote URL 为主判据、目录名为辅助判据，防止目录改名后误拒绝、也防止同名其他仓库冒充。
+- 自排除机制：eco-sync 成为仓库级 skill 后，若仍参与 `~/.agents/skills ↔ skills/` 的同步循环，status 会误报 DELETED_LOCAL，pull 会把它复制回设备全局目录、push --prune 会删除仓库权威源；因此 `compare_skills` 通过 `is_eco_sync_rel` 把 eco-sync 从同步范围整体排除，其自身更新只走常规 Git 流程。

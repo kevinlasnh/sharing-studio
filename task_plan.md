@@ -4,7 +4,7 @@
 将仓库（kevin-AI-studio）维护为个人 AI 使用生态中心：收录全局 agent markdown 脱敏镜像与全部全局 agent skills，并提供 eco-sync skill 实现多设备双向同步。
 
 ## 当前阶段
-阶段 2
+阶段 3
 
 ## 各阶段
 
@@ -33,6 +33,16 @@
 - [x] 最终验证：status 全量一致 + push dry-run 无变更
 - **状态：** complete
 
+### 阶段 3：eco-sync 转为仓库级 skill
+- [x] 修改 `sync.py`：移除 `--repo` 参数，改为从当前目录向上定位 git 仓库根并验证身份（remote origin 含 kevin-AI-studio 或目录名匹配），其他仓库/目录拒绝执行
+- [x] 更新 `SKILL.md`：标注仓库级、新用法（`.agents/skills/eco-sync/scripts/sync.py`）、新设备部署步骤
+- [x] 在仓库内创建 `.agents/skills/eco-sync` 与 `.claude/skills/eco-sync` 两份未跟踪运行时实体副本（与权威源 `skills/eco-sync` 逐字节一致）
+- [x] 删除全局部署 `~/.agents/skills/eco-sync` 与 `~/.claude/skills/eco-sync` symlink，宿主全局技能目录已确认移除 eco-sync
+- [x] 修复设计矛盾：`compare_skills` 排除 eco-sync 自身，避免 pull 把它复制回设备全局目录、push --prune 删除仓库权威源
+- [x] 验证：仓库内 `status` 输出「生态副本完全一致」；仓库外运行被拒绝退出
+- [x] 更新双语 README（skills 表格加 eco-sync 并标注仓库级、布局树、新设备部署说明）与根 `AGENTS.md`/`CLAUDE.md` Sync Conventions
+- **状态：** complete
+
 ## 已做决策
 | 决策 | 理由 |
 |------|------|
@@ -46,6 +56,7 @@
 | 保留 Code Comments 规则并收敛为三宿主版 | 用户确认；本机三份与仓库镜像统一为「三宿主 + Code Comments」 |
 | `global/` 平铺三份镜像（含 `AGENTS.dsh.md`） | 用户确认；与设备端文件名一一对应最直观 |
 | 本地目录名一并改为 `kevin-AI-studio` | 用户确认；与上游仓库名保持一致，需同步更新 `.brv` cwd |
+| eco-sync 改为仓库级 skill | 用户确认；只允许在 kevin-AI-studio 仓库内改动 AI 生态副本，全局部署已移除 |
 
 ## 备注
 - 不记录任何 API key 或本机专属路径。

@@ -40,6 +40,7 @@
 | [`planning-with-files-zh`](./skills/planning-with-files-zh/) | Manus 风格文件规划，持久化 `task_plan.md` / `findings.md` / `progress.md` 三件套。 |
 | [`skill-creator`](./skills/skill-creator/) | 创建、修改和评测 agent skills（Apache-2.0，基于上游 skill-creator）。 |
 | [`tavily-search`](./skills/tavily-search/) | 经 Tavily CLI 做 LLM 优化的 Web 搜索；只作为宿主内置 Web Search 的获批 fallback。 |
+| [`eco-sync`](./skills/eco-sync/) | **仓库级 skill。** 双向同步 AI 生态（全局规则 + 全局 skills）与本仓库脱敏副本，只在本仓库内可运行。 |
 
 ## 仓库结构
 
@@ -59,7 +60,8 @@ kevin-AI-studio/
 │   ├── obsidian-markdown/
 │   ├── planning-with-files-zh/
 │   ├── skill-creator/
-│   └── tavily-search/
+│   ├── tavily-search/
+│   └── eco-sync/           # 仓库级同步 skill（权威源）
 ├── AGENTS.md              # 仓库规则（已跟踪，公开安全）
 ├── CLAUDE.md              # 仓库规则（与 AGENTS.md 一致）
 ├── task_plan.md           # PWF 任务记忆（已跟踪）
@@ -77,6 +79,15 @@ kevin-AI-studio/
 1. 全局 skill 本地有改动 → 更新 `skills/` 下对应副本 → commit。
 2. 全局规则文件本地有改动 → 同步改 `global/` 下三份镜像（保持逐字节一致）→ commit。
 3. 回装机器的过程手动进行：把 `skills/` 实体复制到本机全局 skills 目录（Claude Code 侧用 symlink 复用），把 `global/` 镜像替换两个占位符后渲染为本机 `CLAUDE.md` / `AGENTS.md`。
+
+### eco-sync（仓库级 skill）
+
+`skills/eco-sync/` 自动化上述同步流程，但刻意只在本仓库内运行。运行时实体位于 `.agents/skills/eco-sync/` 与 `.claude/skills/eco-sync/`（未跟踪、两份内容一致）。新设备 clone 后部署一次：
+
+```bash
+cp -a skills/eco-sync .agents/skills/
+cp -a skills/eco-sync .claude/skills/
+```
 
 ## 发布边界
 

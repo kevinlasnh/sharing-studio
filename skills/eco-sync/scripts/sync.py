@@ -73,6 +73,9 @@ CLAUDE_SKILLS_DIR = "~/.claude/skills"
 IGNORED_PARTS = {"__pycache__", ".git", ".DS_Store"}
 IGNORED_SUFFIXES = (".pyc",)
 
+# eco-sync 自身：仓库级 skill，不参与设备全局生态同步（见 compare_skills）。
+ECO_SYNC_NAME = "eco-sync"
+
 # 公开仓库中的脱敏占位符（与仓库 README / 全局规则约定一致）。
 PLACEHOLDER_USER = "<your-username>"
 PLACEHOLDER_VAULT = "<second-brain-path>"
@@ -152,6 +155,11 @@ def should_ignore(rel):
     return False
 
 
+def is_eco_sync_rel(rel):
+    """判断相对路径是否属于 eco-sync 自身（顶层目录或其子文件）。"""
+    return rel == ECO_SYNC_NAME or rel.startswith(ECO_SYNC_NAME + "/")
+
+
 def scan_files(root):
     """递归收集目录下全部文件的 {相对路径: sha256}；目录不存在返回 {}。
 
@@ -226,23 +234,33 @@ def run_git_bytes(repo, *args):
     return proc.stdout
 
 
-def find_repo(explicit):
-    """定位仓库路径：显式参数优先；否则当前目录；再否则常见 clone 位置。"""
-    if explicit:
-        repo = Path(explicit).expanduser()
-    else:
-        repo = Path.cwd()
-        if not (repo / ".git").exists():
-            # 常见 clone 位置兜底，便于 skill 在任意目录被调用
-            candidates = [
-                Path.home() / "Projects" / "kevin-AI-studio",
-                Path.home() / "kevin-AI-studio",
-            ]
-            repo = next((c for c in candidates if (c / ".git").exists()), None)
-    if repo is None or not (repo / ".git").exists():
-        raise SystemExit("找不到 kevin-AI-studio 仓库，请用 --repo 指定路径。")
-    run_git(repo, "rev-parse", "--is-inside-work-tree")
-    return repo
+def find_repo():
+    """定位并验证仓库：eco-sync 是仓库级 skill，只允许在 kevin-AI-studio 仓库内运行。
+
+    从当前目录向上查找 git 仓库根，然后验证仓库身份：remote origin URL 含
+    kevin-AI-studio，或仓库根目录名恰为 kevin-AI-studio；两者都不满足即拒绝
+    执行，防止在其他仓库或普通目录误触发生态同步（用户明确要求只有本仓库
+    才能改动 AI 生态副本）。
+    """
+    cwd = Path.cwd()
+    root = None
+    for parent in [cwd] + list(cwd.parents):
+        if (parent / ".git").exists():
+            root = parent
+            break
+    if root is None:
+        raise SystemExit(
+            "eco-sync 是 kevin-AI-studio 仓库级 skill，请在仓库目录内运行。"
+        )
+    url = ""
+    try:
+        url = run_git(root, "config", "--get", "remote.origin.url")
+    except GitError:
+        url = ""
+    if root.name == "kevin-AI-studio" or "kevin-AI-studio" in url:
+        run_git(root, "rev-parse", "--is-inside-work-tree")
+        return root
+    raise SystemExit("当前仓库不是 kevin-AI-studio，拒绝执行生态同步。")
 
 
 def git_show(repo, rev, repo_rel):
@@ -368,10 +386,17 @@ def compare_skills(device_files, old_files, new_files):
     """对 skills 文件做三路比较（hash 口径），返回 Item 列表。
 
     三个参数都是 {相对路径: sha256}；old/new 分别为 pull 前后仓库 HEAD 的树。
+
+    eco-sync 自身从本比较中排除：它是仓库级 skill，权威源在仓库 skills/ 内、
+    运行时实体在仓库 .agents/skills/ 与 .claude/skills/，不属于设备全局生态，
+    因此不参与设备与仓库之间的 skills 同步循环（否则 pull 会把它复制回设备
+    全局目录、push --prune 会删掉仓库权威源）。
     """
     items = []
     all_names = set(device_files) | set(old_files) | set(new_files)
     for rel in sorted(all_names):
+        if is_eco_sync_rel(rel):
+            continue
         device = device_files.get(rel)
         old_base = old_files.get(rel)
         new_base = new_files.get(rel)
@@ -544,9 +569,8 @@ def resolve_force(items, force, direction):
 # 入口
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="个人 AI 使用生态双向同步")
+    parser = argparse.ArgumentParser(description="个人 AI 使用生态双向同步（kevin-AI-studio 仓库级）")
     parser.add_argument("mode", choices=["status", "push", "pull"])
-    parser.add_argument("--repo", help="kevin-AI-studio 仓库路径")
     parser.add_argument("--yes", action="store_true", help="执行写入；缺省 dry-run")
     parser.add_argument(
         "--force", choices=["local", "repo"],
@@ -555,7 +579,7 @@ def main():
     parser.add_argument("--prune", action="store_true", help="允许删除对方已不存在的 skill")
     args = parser.parse_args()
 
-    repo = find_repo(args.repo)
+    repo = find_repo()
     values = LocalValues(HOST_RULE_FILES)
     print(f"仓库：{repo}")
     print(f"本机值：username={values.username} vault={values.vault}")
