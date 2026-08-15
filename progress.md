@@ -60,6 +60,11 @@
   - 本机三份宿主规则 `cmp` 两两一致；仓库三份镜像 `cmp` 两两一致；镜像无 `kevinlasnh` / `/home/` 残留；Code Comments 规则各出现 1 次。
   - `sync.py` py_compile 通过；status 实跑：本机值与 vault 路径从 Path Guard 行自动提取成功。
   - 首轮 status 全量 skill 误报 PUSH，定位为 `git show` 经 `text=True` 管道被 universal newlines 转换、hash 口径与设备字节不一致；改用字节口径 `run_git_bytes` 后，status 仅剩 5 项真实差异（三份规则收敛 + eco-sync 新增），其余 10 个 skill 全部 UNCHANGED。
+  - 第二轮 status 剩三份规则文件误报 PUSH，定位为文本口径 `run_git` 的 strip 剥掉尾换行；`git_show` 改字节口径精确解码后，status 全量一致。
+- 发布：
+  - 创建提交 `4297179`（`refactor: converge global rules to three-host edition with Code Comments`）、`28452b9`（`feat: add eco-sync skill for bidirectional AI ecosystem sync`）、`026851e`（`fix: read rule mirrors with byte-exact git show to avoid strip drift`）并 push 到 `origin/master`。
+  - 本地目录 `~/Projects/sharing-studio` 重命名为 `~/Projects/kevin-AI-studio`，`.brv/config.json` cwd 同步更新。
+  - 最终回归：`sync.py status` 输出「生态副本完全一致，没有差异」；push dry-run 输出「没有需要推送的变更」；本地 HEAD 与远端 `refs/heads/master` 一致，工作区 clean。
 - 遇到的问题：
   - `gh repo rename` 传两个位置参数被拒（accepts at most 1 arg），改用 `-R kevinlasnh/sharing-studio` 指定仓库后成功。
   - status 全量误报 PUSH（见上），根因是文本管道换行转换改变 hash 口径，已修复并回归验证。

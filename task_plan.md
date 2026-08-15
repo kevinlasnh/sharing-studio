@@ -28,10 +28,10 @@
 - [x] 部署 eco-sync 到 `~/.agents/skills/` 并创建 `~/.claude/skills/` symlink，宿主已识别
 - [x] 修复 hash 口径 bug（git show 用字节口径，避免 universal newlines 转换造成全量误报）
 - [x] 测试 status：仅剩本会话的 5 项真实差异，其余 skill 全部一致
-- [ ] 提交全部改动并 push 到新远端 `origin/master`
-- [ ] 重命名本地目录为 `kevin-AI-studio` 并更新 `.brv/config.json` cwd
-- [ ] 最终验证：status 全量一致 + push dry-run 无变更
-- **状态：** in_progress
+- [x] 提交全部改动并 push 到新远端 `origin/master`
+- [x] 重命名本地目录为 `kevin-AI-studio` 并更新 `.brv/config.json` cwd
+- [x] 最终验证：status 全量一致 + push dry-run 无变更
+- **状态：** complete
 
 ## 已做决策
 | 决策 | 理由 |
