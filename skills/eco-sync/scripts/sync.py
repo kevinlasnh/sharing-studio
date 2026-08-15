@@ -246,11 +246,17 @@ def find_repo(explicit):
 
 
 def git_show(repo, rev, repo_rel):
-    """读取仓库某修订中文件的原始文本；文件在该修订不存在时返回 None。"""
+    """读取仓库某修订中文件的原始文本；文件在该修订不存在时返回 None。
+
+    用字节口径读取后按 UTF-8 解码，保留完整内容（含尾换行），保证与设备端
+    Path.read_text 得到的文本逐字一致；文本口径的 run_git 会 strip 首尾空白，
+    导致规则文件比较因尾换行差异误报 PUSH。
+    """
     try:
-        return run_git(repo, "show", f"{rev}:{repo_rel}")
-    except GitError:
+        raw = run_git_bytes(repo, "show", f"{rev}:{repo_rel}")
+    except subprocess.CalledProcessError:
         return None
+    return raw.decode("utf-8")
 
 
 def head_rule_local(repo, rev, repo_rel, values):
