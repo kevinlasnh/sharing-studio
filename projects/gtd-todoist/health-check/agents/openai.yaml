@@ -1,4 +1,0 @@
-interface:
-  display_name: "GTD Todoist Health"
-  short_description: "Run the read-only GTD harness health check."
-  default_prompt: "Check the GTD Todoist harness and report clean or residual risk."

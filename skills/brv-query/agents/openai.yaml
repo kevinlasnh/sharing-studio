@@ -1,0 +1,4 @@
+interface:
+  display_name: "BRV Query"
+  short_description: "Query ByteRover repository memory."
+  default_prompt: "查询长期记忆：这个仓库里相关的历史决策是什么？"

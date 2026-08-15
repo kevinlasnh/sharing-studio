@@ -1,0 +1,4 @@
+interface:
+  display_name: "BRV Curate"
+  short_description: "Curate PWF knowledge into ByteRover."
+  default_prompt: "沉淀长期记忆：把本次任务中值得长期保存的知识写入 ByteRover。"

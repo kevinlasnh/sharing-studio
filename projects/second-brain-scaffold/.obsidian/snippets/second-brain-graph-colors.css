@@ -1,4 +1,0 @@
-/* Keep raw attachments visually distinct from daily notes in graph view. */
-body {
-  --graph-node-attachment: #CC79A7;
-}
