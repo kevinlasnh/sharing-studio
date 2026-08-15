@@ -31,7 +31,7 @@
 ### Text Encoding
 
 * 文本文件默认按 UTF-8 + LF 处理，读写中文时避免引入乱码或 CRLF。
-* 编辑现有文件时保持原文件的编码、换行和格式化风格；优先使用 `apply_patch` 或仓库既有格式化工具。
+* 编辑现有文件时保持原文件的编码、换行和格式化风格；优先使用宿主的补丁式编辑工具（Codex 的 `apply_patch`、DSH 的 `edit`/`write`）或仓库既有格式化工具。
 * 需要确认编码或换行时，用 `file -bi <file>`、`locale` 或仓库工具检查。
 * 若发现非 UTF-8、CRLF 或混合换行，先报告影响范围，再决定是否转换。
 
@@ -41,10 +41,10 @@
 
 ### Agent Markdown Sync
 
-* 全局配置：`~/.claude/CLAUDE.md` 和 `~/.codex/AGENTS.md` 必须同时存在，内容完全一致，H1 统一写 `# Global Agent Markdown`。
+* 全局配置：`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md` 和 `~/.dsh/AGENTS.md` 必须同时存在，内容完全一致，H1 统一写 `# Global Agent Markdown`。
 * 仓库根配置：主工作仓库根目录下的 `CLAUDE.md` 和 `AGENTS.md` 若存在，必须同时存在，内容完全一致，H1 统一写 `# Repository Agent Markdown`。
 * 多 Git worktree 可缺少仓库根 `CLAUDE.md` / `AGENTS.md`；此时沿用已加载的仓库级规则与全局规则，不强制补齐。
-* 修改或新增任一受控文件时，必须同步更新同作用域内另一份文件。
+* 修改或新增任一受控文件时，必须同步更新同作用域内其余文件。
 * 本规则只适用于全局 agent markdown 和仓库根目录 agent markdown；仓库子目录下的同名文件不受此同步规则约束。
 
 ### Skill Installation

@@ -8,7 +8,7 @@
 
 ## Repository Layout
 
-* `global/` — desensitized mirrors of the global `CLAUDE.md` / `AGENTS.md` rule files. The two files must stay byte-identical and share the H1 `# Global Agent Markdown`.
+* `global/` — desensitized mirrors of the global `CLAUDE.md` / `AGENTS.md` / `AGENTS.dsh.md` rule files. The three files must stay byte-identical and share the H1 `# Global Agent Markdown`.
 * `skills/` — authoritative copies of the global skills installed under the local global skills directory. Claude Code reuses the same entities via symlinks.
 * Repository-root `AGENTS.md` / `CLAUDE.md` are tracked, public-safe repository rules.
 * PWF files `task_plan.md`, `progress.md`, and `findings.md` are repository task memory.

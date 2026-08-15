@@ -1,4 +1,4 @@
-<h1 align="center">sharing-studio</h1>
+<h1 align="center">kevin-AI-studio</h1>
 
 <p align="center">
   <strong>个人 AI 使用生态：全局 agent markdown 脱敏镜像与全局 agent skills 权威副本。</strong>
@@ -23,7 +23,7 @@
 
 | 目录 | 内容 |
 | :--- | :--- |
-| [`global/`](./global/) | 我的全局 agent 规则文件 `CLAUDE.md` / `AGENTS.md` 的脱敏镜像。两份文件逐字节一致，共用 H1 `# Global Agent Markdown`。 |
+| [`global/`](./global/) | 我的全局 agent 规则文件 `CLAUDE.md`（Claude Code）、`AGENTS.md`（Codex）、`AGENTS.dsh.md`（DeepSeek Harness）的脱敏镜像。三份文件逐字节一致，共用 H1 `# Global Agent Markdown`。 |
 | [`skills/`](./skills/) | 我全部全局 agent skills 的权威副本。全局 skill 的任何本地改动都必须同步到这里。 |
 
 ## Skills 清单
@@ -44,9 +44,10 @@
 ## 仓库结构
 
 ```text
-sharing-studio/
+kevin-AI-studio/
 ├── global/
 │   ├── AGENTS.md          # 全局 Codex 规则脱敏镜像
+│   ├── AGENTS.dsh.md      # 全局 DSH 规则脱敏镜像
 │   └── CLAUDE.md          # 全局 Claude Code 规则脱敏镜像
 ├── skills/                # 全部全局 skills 权威副本
 │   ├── baoyu-format-markdown/
@@ -74,7 +75,7 @@ sharing-studio/
 本机真源 → 脱敏镜像：
 
 1. 全局 skill 本地有改动 → 更新 `skills/` 下对应副本 → commit。
-2. 全局规则文件本地有改动 → 同步改 `global/` 下两份镜像（保持逐字节一致）→ commit。
+2. 全局规则文件本地有改动 → 同步改 `global/` 下三份镜像（保持逐字节一致）→ commit。
 3. 回装机器的过程手动进行：把 `skills/` 实体复制到本机全局 skills 目录（Claude Code 侧用 symlink 复用），把 `global/` 镜像替换两个占位符后渲染为本机 `CLAUDE.md` / `AGENTS.md`。
 
 ## 发布边界

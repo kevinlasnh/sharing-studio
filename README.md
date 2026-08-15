@@ -1,4 +1,4 @@
-<h1 align="center">sharing-studio</h1>
+<h1 align="center">kevin-AI-studio</h1>
 
 <p align="center">
   <strong>Personal AI usage ecosystem: desensitized mirrors of my global agent markdown and authoritative copies of my global agent skills.</strong>
@@ -23,7 +23,7 @@
 
 | Directory | Contents |
 | :--- | :--- |
-| [`global/`](./global/) | Desensitized mirrors of my global agent rule files `CLAUDE.md` / `AGENTS.md`. The two files are byte-identical and share the H1 `# Global Agent Markdown`. |
+| [`global/`](./global/) | Desensitized mirrors of my global agent rule files `CLAUDE.md` (Claude Code), `AGENTS.md` (Codex), and `AGENTS.dsh.md` (DeepSeek Harness). The three files are byte-identical and share the H1 `# Global Agent Markdown`. |
 | [`skills/`](./skills/) | Authoritative copies of all my global agent skills. Each local change to a global skill must be reflected here. |
 
 ## Skills
@@ -44,9 +44,10 @@
 ## Repository Layout
 
 ```text
-sharing-studio/
+kevin-AI-studio/
 ├── global/
 │   ├── AGENTS.md          # desensitized mirror of the global Codex rules
+│   ├── AGENTS.dsh.md      # desensitized mirror of the global DSH rules
 │   └── CLAUDE.md          # desensitized mirror of the global Claude Code rules
 ├── skills/                # authoritative copies of all global skills
 │   ├── baoyu-format-markdown/
@@ -74,7 +75,7 @@ sharing-studio/
 Local truth → desensitized mirror:
 
 1. A global skill changes locally → update the matching copy under `skills/` → commit.
-2. Global rule files change locally → apply the same change to the two mirrors in `global/` (keep them byte-identical) → commit.
+2. Global rule files change locally → apply the same change to the three mirrors in `global/` (keep them byte-identical) → commit.
 3. Deployment back to a machine is manual: copy `skills/` entities into the local global skills directory and let Claude Code reuse them via symlinks; render the `global/` mirrors into the local `CLAUDE.md` / `AGENTS.md` by substituting the two placeholders.
 
 ## Publishing Boundary
