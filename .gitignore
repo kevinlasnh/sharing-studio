@@ -1,13 +1,14 @@
-# Agent local state and hidden directories
-/AGENTS.md
-/CLAUDE.md
+# Agent runtime state (local only)
 /.claude/
 /.codex/
 /.agents/
 /.workflows/
 /.obsidian/
 /.brv/
-/.brv
+
+# Python cache
+__pycache__/
+*.pyc
 
 # Secrets
 .env

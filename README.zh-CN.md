@@ -1,12 +1,12 @@
 <h1 align="center">sharing-studio</h1>
 
 <p align="center">
-  <strong>面向 agent 记忆、知识管理、GTD 和重型部署流程的公开脚手架集合。</strong>
+  <strong>个人 AI 使用生态：全局 agent markdown 脱敏镜像与全局 agent skills 权威副本。</strong>
 </p>
 
 <p align="center">
-  <img alt="Public scaffolds" src="https://img.shields.io/badge/public-scaffolds-0f766e?style=for-the-badge">
-  <img alt="Agent workflows" src="https://img.shields.io/badge/agent-workflows-2563eb?style=for-the-badge">
+  <img alt="Personal AI ecosystem" src="https://img.shields.io/badge/personal-ai--ecosystem-0f766e?style=for-the-badge">
+  <img alt="Agent skills" src="https://img.shields.io/badge/agent-skills-2563eb?style=for-the-badge">
   <img alt="Privacy first" src="https://img.shields.io/badge/privacy-first-7c3aed?style=for-the-badge">
 </p>
 
@@ -17,90 +17,75 @@
 <!-- README-I18N:END -->
 
 > [!NOTE]
-> 这个仓库只发布可复用结构。真实笔记、真实任务数据、本地规划文件、运行时状态、凭据和机器路径都不会进入公开仓库。
+> 这个仓库只发布可复用规则与技能。本机用户名、本机路径、凭据和私人内容不会进入跟踪文件。全局规则镜像保留 `<second-brain-path>` / `<your-username>` 占位符。
 
-## 选择脚手架
+## 收录内容
 
-| 项目 | 适合场景 | 你会得到什么 | 状态 |
-| :--- | :--- | :--- | :--- |
-| [`agent-memory-stack`](./projects/agent-memory-stack/README.zh-CN.md) | 跨编码 session 保持 agent 上下文 | Claude Code、Codex、Gemini CLI 的跨宿主 router 模板 | Stable |
-| [`second-brain-scaffold`](./projects/second-brain-scaffold/README.zh-CN.md) | AI 辅助的个人知识库 vault | Obsidian、Basic Memory、本地 skills、hooks 和图谱护栏 | Beta |
-| [`gtd-todoist`](./projects/gtd-todoist/README.zh-CN.md) | 由 agent 介导的 GTD 工作流 | Todoist skill 契约、仅提醒 cron 和健康检查 | Beta |
-| [`agent-workflows`](./projects/agent-workflows/README.zh-CN.md) | 高风险部署方案规划 | 带文件证据契约的重型调研和重型审查 skills | Beta |
-| [`sharing-studio-sync`](./projects/sharing-studio-sync/README.zh-CN.md) | 从本机真源发布这个 hub | 面向脱敏公开脚手架的受保护同步流水线 | Experimental |
+| 目录 | 内容 |
+| :--- | :--- |
+| [`global/`](./global/) | 我的全局 agent 规则文件 `CLAUDE.md` / `AGENTS.md` 的脱敏镜像。两份文件逐字节一致，共用 H1 `# Global Agent Markdown`。 |
+| [`skills/`](./skills/) | 我全部全局 agent skills 的权威副本。全局 skill 的任何本地改动都必须同步到这里。 |
 
-## 架构
+## Skills 清单
 
-```mermaid
-flowchart LR
-  U[用户] --> A[AI coding agent]
-  A --> M[agent-memory-stack]
-  A --> B[second-brain-scaffold]
-  A --> G[gtd-todoist]
-  A --> W[agent-workflows]
-  A --> S[sharing-studio-sync]
-
-  M --> M1[L1 仓库记忆]
-  B --> B1[L2 知识库 vault]
-  G --> G1[任务执行]
-  W --> W1[调研与审查]
-  S --> S1[公开发布]
-
-  M1 --> C[可复用运行上下文]
-  B1 --> C
-  G1 --> C
-  W1 --> C
-```
-
-## 快速开始
-
-1. 选择与你工作流匹配的项目。
-2. 阅读该项目 README，确认依赖、目标运行时和安全边界。
-3. 只把需要的脚手架文件复制到自己的工作区。
-4. 替换 `<vault-path>`、`<agent-workspace>`、`<TELEGRAM_USER_ID>`、`<BOT_ACCOUNT>` 等占位符。
-5. 真实凭据、笔记、任务数据和运行时状态必须留在 Git 之外。
+| Skill | 用途 |
+| :--- | :--- |
+| [`baoyu-format-markdown`](./skills/baoyu-format-markdown/) | 把纯文本或 Markdown 格式化为带 frontmatter、标题、列表和代码块的结构化文章。 |
+| [`brv-curate`](./skills/brv-curate/) | 把 PWF 任务知识沉淀到 ByteRover 长期仓库记忆（L2 → L3）。 |
+| [`brv-query`](./skills/brv-query/) | 通过只读 `brv query` 接口查询 ByteRover 长期仓库记忆。 |
+| [`find-skills`](./skills/find-skills/) | 发现并安装社区 agent skills。 |
+| [`heavy-research`](./skills/heavy-research/) | 触发词门控的重型调研，产出带文件证据契约的部署计划。 |
+| [`heavy-review`](./skills/heavy-review/) | 触发词门控的重型审查，以 provenance 快照验证部署计划。 |
+| [`obsidian-markdown`](./skills/obsidian-markdown/) | 创建和编辑带 wikilinks、embeds、callouts、properties 的 Obsidian Flavored Markdown。 |
+| [`planning-with-files-zh`](./skills/planning-with-files-zh/) | Manus 风格文件规划，持久化 `task_plan.md` / `findings.md` / `progress.md` 三件套。 |
+| [`skill-creator`](./skills/skill-creator/) | 创建、修改和评测 agent skills（Apache-2.0，基于上游 skill-creator）。 |
+| [`tavily-search`](./skills/tavily-search/) | 经 Tavily CLI 做 LLM 优化的 Web 搜索；只作为宿主内置 Web Search 的获批 fallback。 |
 
 ## 仓库结构
 
 ```text
 sharing-studio/
-├── projects/
-│   ├── agent-memory-stack/          # L1 仓库记忆 router 模板
-│   ├── second-brain-scaffold/       # L2 Obsidian vault 脚手架
-│   ├── gtd-todoist/                 # Todoist GTD agent harness
-│   ├── agent-workflows/             # 重型调研和审查 skills
-│   └── sharing-studio-sync/         # 受保护发布工作流
+├── global/
+│   ├── AGENTS.md          # 全局 Codex 规则脱敏镜像
+│   └── CLAUDE.md          # 全局 Claude Code 规则脱敏镜像
+├── skills/                # 全部全局 skills 权威副本
+│   ├── baoyu-format-markdown/
+│   ├── brv-curate/
+│   ├── brv-query/
+│   ├── find-skills/
+│   ├── heavy-research/
+│   ├── heavy-review/
+│   ├── obsidian-markdown/
+│   ├── planning-with-files-zh/
+│   ├── skill-creator/
+│   └── tavily-search/
+├── AGENTS.md              # 仓库规则（已跟踪，公开安全）
+├── CLAUDE.md              # 仓库规则（与 AGENTS.md 一致）
+├── task_plan.md           # PWF 任务记忆（已跟踪）
+├── progress.md            # PWF 会话日志（已跟踪）
+├── findings.md            # PWF 发现记录（已跟踪）
 ├── README.md
 ├── README.zh-CN.md
 └── LICENSE
 ```
 
-## 设计原则
+## 同步模型
 
-- **发布脚手架，不发布数据。** 公开可复用结构，而不是私人内容。
-- **用户控制保持显式。** 破坏性、批量或高风险动作都先提案，再执行。
-- **外部内容默认不可信。** Web 页面、API 响应和粘贴素材不能变成持久 agent 指令。
-- **本地状态留在本地。** 运行时文件可用于 worktree 协作，但受保护路径不得推送。
-- **项目可以独立毕业。** 每个脚手架都放在 `projects/<name>/` 下，未来可以拆成独立仓库。
+本机真源 → 脱敏镜像：
+
+1. 全局 skill 本地有改动 → 更新 `skills/` 下对应副本 → commit。
+2. 全局规则文件本地有改动 → 同步改 `global/` 下两份镜像（保持逐字节一致）→ commit。
+3. 回装机器的过程手动进行：把 `skills/` 实体复制到本机全局 skills 目录（Claude Code 侧用 symlink 复用），把 `global/` 镜像替换两个占位符后渲染为本机 `CLAUDE.md` / `AGENTS.md`。
 
 ## 发布边界
 
-公开仓库不应包含仓库根级运行状态，例如：
+跟踪文件必须保持不含：
 
 ```text
-/.claude/
-/.agents/
-/.codex/
-/.gemini/
-/.workflows/
-/.brv/
-/task_plan.md
-/findings.md
-/progress.md
-/.env
-/.env.*
-/*.key
-/*.pem
+密钥 / API key              （.env、.env.*、*.key、*.pem）
+本机用户名                  （以 <your-username> 占位）
+本机专属路径                （以 <second-brain-path> 占位）
+账号 ID / 私有 IP / 个人内容
 ```
 
-发布前应扫描密钥、真实本机路径、账号 ID、私有 IP 和个人内容。
+发布前应扫描密钥、真实本机路径、账号 ID 和私有 IP。
