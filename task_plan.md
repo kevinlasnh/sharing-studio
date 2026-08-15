@@ -4,7 +4,7 @@
 在新 Ubuntu 系统上恢复并微调个人 agent 脚手架，使 Codex、brv、PWF 和后续 Second Brain/GTD 流程能按当前系统运行。
 
 ## 当前阶段
-阶段 4
+阶段 8
 
 ## 各阶段
 
@@ -86,6 +86,13 @@
 - [x] 以复核通过的全局规则更新 `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md` 脱敏镜像
 - [x] 记录 PWF 进度
 - [x] 提交、push 并核验远端提交
+- **状态：** complete
+
+### 阶段 8：远端 shared 全局规则部署到本机
+- [x] 执行 `git pull --ff-only`，将仓库快进到远端最新提交 `2d60470`
+- [x] 确认 `projects/agent-memory-stack/global/CLAUDE.md` 与 `AGENTS.md` 为最新 shared 镜像且字节级一致
+- [x] 以 shared 内容为基准更新 `/home/kevinlasnh/.claude/CLAUDE.md` 与 `/home/kevinlasnh/.codex/AGENTS.md`，仅替换本机用户名和 Second Brain 路径占位符
+- [x] 完成 Ubuntu、sudo、编码、路径 guard、Codex prompt 和双宿主同步核验
 - **状态：** complete
 
 ## 关键问题

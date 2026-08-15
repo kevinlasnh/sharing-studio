@@ -719,3 +719,28 @@
   - 提交边界确认仅包含两份 sharing 镜像和 PWF 三件套；常见凭据模式、本机路径泄漏与大文件扫描均通过。
   - 创建提交 `34ef1dc`（`docs: enforce native web search priority`）并 push 到 `origin/master`。
   - 本地 HEAD 与远端 `refs/heads/master` 均为 `34ef1dc0688c93506f8f9d7286eacc1ccbe307a1`，确认规则改动和发布前 PWF checkpoint 已进入远端。
+
+## 会话：2026-08-09
+
+### 阶段 8：远端 shared 全局规则部署到本机
+- **状态：** complete
+- **更新时间：** 2026-08-09 12:34:32 +0800
+- 执行的操作：
+  - 在 `/home/kevinlasnh/Projects/sharing-studio` 归一化路径并确认工作区干净后执行 `git pull --ff-only`。
+  - 仓库从 `f74e4ca` 快进到远端提交 `2d60470`（`docs: close web search rule rollout`）；拉取包含最新 `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md`。
+  - 读取并核对 shared 两份文件：149 行、10,801 字节、SHA-256 `0c1c8d5f...a94f6d`，两份源文件完全一致。
+  - 以 shared 文件为唯一正文基准更新本机 `/home/kevinlasnh/.claude/CLAUDE.md` 和 `/home/kevinlasnh/.codex/AGENTS.md`；仅将 `<second-brain-path>` 替换为 `/home/kevinlasnh/Documents/second-brain`，将 `<your-username>` 替换为 `kevinlasnh`，删除旧版个人服务器别名和旧 Git/Web 规则。
+- 验证：
+  - 两份本机文件与“shared + 两项本机替换”的渲染结果 `cmp` 通过；彼此字节级一致，SHA-256 均为 `f9fbdd3a...f1f2c3`。
+  - H1 为 `# Global Agent Markdown`；文件为 UTF-8 + LF，无模板占位符或旧个人服务器信息残留。
+  - `/home/kevinlasnh/Documents/second-brain`、全局配置目录和 PWF skill 均存在；`sudo -n true` 通过。
+  - `codex --version` 输出 `codex-cli 0.147.0`；`codex debug prompt-input ping` 可见最新 Web Search、路径 guard 和 Git 规则。
+  - 仓库 `git status --short --branch` 保持 clean（全局文件位于仓库外）。
+- 创建/修改的文件：
+  - `/home/kevinlasnh/.claude/CLAUDE.md`
+  - `/home/kevinlasnh/.codex/AGENTS.md`
+  - `task_plan.md`
+  - `progress.md`
+  - `findings.md`
+- 收口复核：`claude doctor`（native 2.1.220，Linux x64）报告 `No installation issues found`；`brv --version`、PWF session-catchup、根级 `AGENTS.md` / `CLAUDE.md` 同步和路径 guard 分支测试均通过。
+- 一条带 `rm -f` 临时清理的验证命令被环境安全策略拒绝，未执行写入或删除；随后改用无临时文件的进程替换重跑并通过。

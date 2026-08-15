@@ -337,3 +337,13 @@
 - 全文件逻辑审查发现既有 Second Brain Path Guard 存在根目录漏判：归一化步骤去除尾部 `/`，旧比较值却保留尾部 `/`。修复后使用“等于无尾斜杠根路径，或以前缀 `根路径/` 开头”，同时避免相邻同名前缀误命中。
 - `projects/agent-memory-stack/global/CLAUDE.md` / `AGENTS.md` 是本仓库对应的 sharing 公开镜像；它们与复审通过的全局源保持同一规则正文，只用 `<second-brain-path>` / `<your-username>` 替代本机值。
 - 最终全局与 sharing 契约审查均通过；两组内部各自逐字节一致，UTF-8 + LF，未发现重复标题、旧 Web Search 条目、直接 Tavily 路径、路径守卫缺口或公开镜像本机信息泄漏。
+
+## 2026-08-09 远端 shared 全局规则部署
+
+- `git pull --ff-only` 将 `sharing-studio` 从 `f74e4ca` 快进到 `2d60470`；该提交的 shared 全局 `CLAUDE.md` / `AGENTS.md` 均为 149 行、10,801 字节，SHA-256 `0c1c8d5f...a94f6d`，两份字节级一致。
+- 最新 shared 文件含两个需要本机解析的运行时占位符：`<second-brain-path>` 和 `<your-username>`。本机事实分别确认是 `/home/kevinlasnh/Documents/second-brain`（无尾斜杠）和 `kevinlasnh`；仓库公开镜像保持占位符，不把本机绝对路径写回仓库。
+- 本机全局两份文件现在等于“最新 shared 正文 + 两项本机替换”，彼此字节级一致，SHA-256 `f9fbdd3a...f1f2c3`；旧 `Personal Server Aliases`、旧 Web Search 和旧 Git Ignore 段落已移除。
+- Ubuntu 兼容证据：Linux x86_64、bash、Python 3、Second Brain vault、PWF skill 均存在，`sudo -n true` 和 Codex prompt-input 探针通过；文件保持 UTF-8 + LF。
+- 该同步只修改仓库外的全局文件；PWF 记录变更留在当前 worktree，未自动 commit/push。
+- 运行时补充：`claude doctor` 确认当前 Claude Code 安装无问题；自定义 API endpoint 导致远程控制不可用属于现有环境状态，与本地 `CLAUDE.md` 加载无关。
+- 验证边界：第一次最终等价性检查因命令包含 `rm -f` 被安全策略拦截；没有产生文件副作用，改用进程替换后通过。
