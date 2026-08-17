@@ -4,7 +4,7 @@
 将仓库（kevin-AI-studio）维护为个人 AI 使用生态中心：收录全局 agent markdown 脱敏镜像与全部全局 agent skills，并提供 eco-sync skill 实现多设备双向同步。
 
 ## 当前阶段
-阶段 3
+阶段 4
 
 ## 各阶段
 
@@ -43,6 +43,15 @@
 - [x] 更新双语 README（skills 表格加 eco-sync 并标注仓库级、布局树、新设备部署说明）与根 `AGENTS.md`/`CLAUDE.md` Sync Conventions
 - **状态：** complete
 
+### 阶段 4：把最新生态部署到本机
+- [x] 部署 eco-sync 仓库级运行时副本到 `.agents/skills/eco-sync`（Codex）与 `.claude/skills/eco-sync`（Claude Code），与权威源逐字节一致
+- [x] 修复 `sync.py` vault 提取正则：按反引号/空白/斜杠边界截取完整目录名，修复带后缀 vault（如 second-brain-private）被截断的 bug
+- [x] 渲染仓库三份镜像为本机值（磁盘实况 vault + username）写入三宿主：更新 `~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`，新建 `~/.dsh/AGENTS.md`
+- [x] 同步 10 个全局 skills 到 `~/.agents/skills`（清理设备端 `__pycache__`）并补全 `~/.claude/skills/` 至 10 个 symlink
+- [x] 验证：三宿主规则逐字节一致、skills 全部 identical、`sync.py status` 输出「生态副本完全一致，没有差异」
+- [x] 更新 PWF 三件套并 commit + push 到 `origin/master`
+- **状态：** complete
+
 ## 已做决策
 | 决策 | 理由 |
 |------|------|
@@ -57,6 +66,7 @@
 | `global/` 平铺三份镜像（含 `AGENTS.dsh.md`） | 用户确认；与设备端文件名一一对应最直观 |
 | 本地目录名一并改为 `kevin-AI-studio` | 用户确认；与上游仓库名保持一致，需同步更新 `.brv` cwd |
 | eco-sync 改为仓库级 skill | 用户确认；只允许在 kevin-AI-studio 仓库内改动 AI 生态副本，全局部署已移除 |
+| 部署渲染的 vault 值以磁盘实况为准 | `/home/kevinlasnh/Documents/second-brain` 目录实际存在且 vault 自身规则引用一致；旧全局规则文件中的 `second-brain-private` 是 08-12 陈迹（vault 已改名），不沿用 |
 
 ## 备注
 - 不记录任何 API key 或本机专属路径。

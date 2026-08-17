@@ -99,3 +99,26 @@
   - 本机：新建 `.agents/skills/eco-sync`、`.claude/skills/eco-sync`（未跟踪运行时副本）；删除 `~/.agents/skills/eco-sync`、`~/.claude/skills/eco-sync`（全局部署）
 - 下一步：
   - commit 并 push 本次仓库级改造。
+
+## 会话：2026-08-17
+
+### 阶段 4：把最新生态部署到本机
+- **状态：** complete
+- **更新时间：** 2026-08-17 +0800
+- 执行的操作：
+  - 部署 eco-sync 仓库级运行时副本：创建 `.agents/skills/eco-sync`（Codex）与 `.claude/skills/eco-sync`（Claude Code）两份实体副本，与权威源 `skills/eco-sync/` 逐字节一致；DSH 会话技能目录随即识别 eco-sync。
+  - 盘点本机生态：`~/.dsh/AGENTS.md` 缺失；`~/.claude/CLAUDE.md` / `~/.codex/AGENTS.md` 为 08-12 双宿主旧版（Path Guard 引用已失效的 vault 路径 `second-brain-private`）；10 个全局 skills 与仓库一致（仅设备端 2 处 `__pycache__` 运行时产物）；`~/.claude/skills/` 仅有 3 个 symlink。
+  - 修复 `sync.py` 的 LocalValues 提取 bug：vault 正则由 `second-brain` 前缀匹配改为按反引号/空白/斜杠边界截取完整目录名，修复带后缀 vault（如 `second-brain-private`）被截断为 `second-brain` 的问题（截断值会导致 push 渲染泄漏 `-private` 片段、pull 渲染指向错误 vault）。修复后同步更新两份运行时副本。
+  - 渲染仓库三份镜像为本机值（vault=`/home/kevinlasnh/Documents/second-brain`、username=`kevinlasnh`，以磁盘实况为准）写入三宿主：更新 `~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`，新建 `~/.dsh/AGENTS.md`；三份逐字节一致、无占位符残留，DSH 会话已热加载新规则。
+  - 同步 skills：10 个全局 skill 设备端与仓库端 `diff -qr` 全部 identical；清理设备端 2 处 `__pycache__`；补全 `~/.claude/skills/` 缺失的 7 个 symlink（现共 10 个，全部指向 `~/.agents/skills/` 实体目录）。
+- 验证：
+  - `sync.py status` 输出「生态副本完全一致，没有差异」。
+  - LocalValues 修复后提取：username=kevinlasnh、vault=/home/kevinlasnh/Documents/second-brain，与磁盘实况一致。
+  - 三宿主规则文件 `cmp` 两两一致；10 个 skill `diff -qr` 全部 identical；两份 eco-sync 运行时副本与权威源逐字节一致。
+- 创建/修改的文件：
+  - `skills/eco-sync/scripts/sync.py`（vault 提取正则修复）
+  - `task_plan.md`、`progress.md`、`findings.md`
+  - 本机：`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`（更新）、`~/.dsh/AGENTS.md`（新建）、`~/.claude/skills/` 新增 7 个 symlink、`~/.agents/skills/` 清理 2 处 `__pycache__`、仓库内 `.agents/skills/eco-sync` / `.claude/skills/eco-sync` 运行时副本（未跟踪，不入库）
+- 发布：
+  - 创建提交（sync.py 修复与 PWF 记录）并 push 到 `origin/master`，核验远端 HEAD 与本地一致。
+

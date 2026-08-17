@@ -28,3 +28,10 @@
 - 仓库级 skill 的运行时形态：实体副本放在 `<repo>/.agents/skills/`（Codex）与 `<repo>/.claude/skills/`（Claude Code），按全局规则两份实体、不用 symlink；这两个目录被 `.gitignore` 的 `/.agents/`、`/.claude/` 规则忽略，因此运行时副本不随仓库分发，新设备 clone 后需从权威源 `skills/eco-sync/` 复制部署一次。
 - 身份验证设计：`find_repo()` 以「remote origin URL 含 kevin-AI-studio 或仓库根目录名匹配」为通过条件，remote URL 为主判据、目录名为辅助判据，防止目录改名后误拒绝、也防止同名其他仓库冒充。
 - 自排除机制：eco-sync 成为仓库级 skill 后，若仍参与 `~/.agents/skills ↔ skills/` 的同步循环，status 会误报 DELETED_LOCAL，pull 会把它复制回设备全局目录、push --prune 会删除仓库权威源；因此 `compare_skills` 通过 `is_eco_sync_rel` 把 eco-sync 从同步范围整体排除，其自身更新只走常规 Git 流程。
+
+## 2026-08-17 生态部署到本机
+
+- 本机真实 vault 是 `/home/kevinlasnh/Documents/second-brain`（磁盘存在、vault 自身规则文件引用一致）；旧全局规则文件中的 `second-brain-private` 是 08-12 陈迹（vault 已改名），部署时以磁盘实况为准渲染 Path Guard，不能沿用旧文件里的路径。
+- `sync.py` 的 LocalValues 提取正则原按 `second-brain` 前缀匹配，遇带后缀 vault（如 `second-brain-private`）会截断成 `second-brain`：push 渲染会残留 `-private` 片段（幸被安全扫描兜住）、pull 渲染会指向错误 vault；已改为以反引号、空白、斜杠为边界整体截取目录名。
+- 新机 bootstrap 不能直接依赖 `sync.py pull`：三路判定假设设备曾与旧基线同步，从未同步过的陈旧规则文件会被判为 PUSH（纯本地改动）而非 PULL，pull 不会更新它们；正确部署路径是把仓库镜像直接渲染为本机值写入三宿主，再跑 status 确认全量 UNCHANGED。
+- 本机此前没有 `~/.dsh/` 与 `~/.brv/`：前者由本次部署创建并写入 AGENTS.md；后者是 brv 运行时目录，按需创建，不属于生态同步范围。
