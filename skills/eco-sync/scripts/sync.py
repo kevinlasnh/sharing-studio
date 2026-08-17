@@ -114,7 +114,9 @@ class LocalValues:
 
     def _detect(self, host_files):
         # Path Guard 行形如：将 `/home/<user>/Documents/second-brain` 替换为...
-        guard_re = re.compile(r"/home/[^/\s]+/Documents/second-brain")
+        # vault 目录名允许任意后缀（如 second-brain-private）：以反引号、空白、
+        # 斜杠为路径边界整体截取目录名，避免按 `second-brain` 前缀匹配把后缀截断。
+        guard_re = re.compile(r"/home/[^/\s]+/Documents/[^`\s/]+")
         for spec, _ in host_files:
             path = Path(spec).expanduser()
             if not path.is_file():
