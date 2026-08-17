@@ -4,7 +4,7 @@
 将仓库（kevin-AI-studio）维护为个人 AI 使用生态中心：收录全局 agent markdown 脱敏镜像与全部全局 agent skills，并提供 eco-sync skill 实现多设备双向同步。
 
 ## 当前阶段
-阶段 4
+阶段 5
 
 ## 各阶段
 
@@ -52,6 +52,14 @@
 - [x] 更新 PWF 三件套并 commit + push 到 `origin/master`
 - **状态：** complete
 
+### 阶段 5：全局规则新增实时时间戳规则
+- [x] 在三宿主全局规则的 L2 PWF 章节「记录进度」后新增「实时时间戳」规则：写任何 PWF 文件前必须先执行系统时间命令（如 `date "+%F %T %z"`）获取实时时间，日期与时间戳以实时输出为准，禁止凭记忆或估计填写
+- [x] 三宿主文件（`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.dsh/AGENTS.md`）保持逐字节一致，DSH 会话已热加载新规则
+- [x] `sync.py push --yes` 同步 `global/` 三份镜像并自动提交推送（commit `8b50ed5`）
+- [x] 验证：镜像三份逐字节一致、渲染回本机视角后与设备文件逐字节一致、新规则各出现 1 次
+- [x] 按新规则先读取实时系统时间（2026-08-17 10:05:09 +0800），再更新 PWF 三件套并 commit + push
+- **状态：** complete
+
 ## 已做决策
 | 决策 | 理由 |
 |------|------|
@@ -67,6 +75,7 @@
 | 本地目录名一并改为 `kevin-AI-studio` | 用户确认；与上游仓库名保持一致，需同步更新 `.brv` cwd |
 | eco-sync 改为仓库级 skill | 用户确认；只允许在 kevin-AI-studio 仓库内改动 AI 生态副本，全局部署已移除 |
 | 部署渲染的 vault 值以磁盘实况为准 | `/home/kevinlasnh/Documents/second-brain` 目录实际存在且 vault 自身规则引用一致；旧全局规则文件中的 `second-brain-private` 是 08-12 陈迹（vault 已改名），不沿用 |
+| PWF 写入前强制读取实时系统时间 | 用户要求；此前存在凭记忆写错日期的问题，所有日期与时间戳一律以 `date` 实时输出为准 |
 
 ## 备注
 - 不记录任何 API key 或本机专属路径。

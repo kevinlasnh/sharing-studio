@@ -122,3 +122,21 @@
 - 发布：
   - 创建提交（sync.py 修复与 PWF 记录）并 push 到 `origin/master`，核验远端 HEAD 与本地一致。
 
+### 阶段 5：全局规则新增实时时间戳规则
+- **状态：** complete
+- **更新时间：** 2026-08-17 10:05:09 +0800
+- 执行的操作：
+  - 按用户要求，在三宿主全局规则的 L2 PWF 章节「记录进度」之后新增「实时时间戳」规则：写入或修改任何 PWF 文件（`task_plan.md` / `progress.md` / `findings.md`）之前，必须先执行一次系统时间命令（如 `date "+%F %T %z"`）获取实时时间；所有日期与时间戳一律以该实时输出为准，禁止凭记忆或估计填写日期。
+  - 同步三宿主：编辑 `~/.claude/CLAUDE.md` 后复制到 `~/.codex/AGENTS.md` 与 `~/.dsh/AGENTS.md`，三份逐字节一致；DSH 会话已热加载新规则。
+  - `sync.py push --yes` 把三份设备规则脱敏渲染写入 `global/` 三份镜像，自动提交并推送（commit `8b50ed5`）。
+- 验证：
+  - 镜像三份 `cmp` 两两一致；镜像渲染回本机视角后与设备文件逐字节一致；「实时时间戳」规则在三份镜像各出现 1 次。
+  - 按新规则先执行 `date "+%F %T %z"` 读取实时时间（2026-08-17 10:05:09 +0800），再写 PWF 三件套。
+- 创建/修改的文件：
+  - `global/CLAUDE.md`、`global/AGENTS.md`、`global/AGENTS.dsh.md`（新增规则）
+  - `task_plan.md`、`progress.md`、`findings.md`
+  - 本机：`~/.claude/CLAUDE.md`、`~/.codex/AGENTS.md`、`~/.dsh/AGENTS.md`
+- 发布：
+  - 规则镜像由 eco-sync push 提交推送（`8b50ed5`）；PWF 记录另行提交并 push，核验远端 HEAD 与本地一致。
+
+

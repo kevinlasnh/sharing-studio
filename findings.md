@@ -35,3 +35,8 @@
 - `sync.py` 的 LocalValues 提取正则原按 `second-brain` 前缀匹配，遇带后缀 vault（如 `second-brain-private`）会截断成 `second-brain`：push 渲染会残留 `-private` 片段（幸被安全扫描兜住）、pull 渲染会指向错误 vault；已改为以反引号、空白、斜杠为边界整体截取目录名。
 - 新机 bootstrap 不能直接依赖 `sync.py pull`：三路判定假设设备曾与旧基线同步，从未同步过的陈旧规则文件会被判为 PUSH（纯本地改动）而非 PULL，pull 不会更新它们；正确部署路径是把仓库镜像直接渲染为本机值写入三宿主，再跑 status 确认全量 UNCHANGED。
 - 本机此前没有 `~/.dsh/` 与 `~/.brv/`：前者由本次部署创建并写入 AGENTS.md；后者是 brv 运行时目录，按需创建，不属于生态同步范围。
+
+## 2026-08-17 全局规则新增实时时间戳规则
+
+- 新增「实时时间戳」规则动因：agent 写 PWF 时曾凭记忆填日期导致写错；规则强制在写任何 PWF 文件前先执行 `date "+%F %T %z"` 类系统时间命令，日期与时间戳一律以实时输出为准。
+- 本次规则同步走 eco-sync push 全流程（status 判定 3 项 PUSH → push 渲染脱敏镜像 → 安全扫描 → 自动 commit + push），验证了修复后的仓库级 skill 端到端可用。
